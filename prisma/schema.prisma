@@ -1,0 +1,120 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String              @id @default(cuid())
+  name          String
+  email         String              @unique
+  passwordHash  String
+  role          String              @default("TRAINEE") // ADMIN, TRAINER, TRAINEE
+  department    String
+  trainerStatus String              @default("NONE") // NONE, PENDING, APPROVED, REJECTED
+  trainerRequestNote String?
+  createdAt     DateTime            @default(now())
+  courses       Course[]            @relation("TrainerCourses")
+  enrollments   Enrollment[]
+  attempts      AssessmentAttempt[]
+  certificates  Certificate[]
+}
+
+model CompetencyBlock {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  courses     Course[]
+  createdAt   DateTime @default(now())
+}
+
+model Course {
+  id                String          @id @default(cuid())
+  title             String
+  description       String
+  competencyBlockId String
+  competencyBlock   CompetencyBlock @relation(fields: [competencyBlockId], references: [id], onDelete: Cascade)
+  trainerId         String
+  trainer           User            @relation("TrainerCourses", fields: [trainerId], references: [id])
+  modules           Module[]
+  enrollments       Enrollment[]
+  certificates      Certificate[]
+  createdAt         DateTime        @default(now())
+}
+
+model Module {
+  id          String       @id @default(cuid())
+  courseId    String
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  type        String       @default("TEXT") // VIDEO, PDF, TEXT, LINK
+  contentUrl  String?
+  contentText String?
+  summary     String?
+  order       Int          @default(0)
+  assessments Assessment[]
+  createdAt   DateTime     @default(now())
+}
+
+model Enrollment {
+  id                 String   @id @default(cuid())
+  courseId           String
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  traineeId          String
+  trainee            User     @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  status             String   @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  progressPercent    Float    @default(0.0)
+  completedModuleIds String   @default("[]") // JSON array string
+  enrolledAt         DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([courseId, traineeId])
+}
+
+model Assessment {
+  id          String              @id @default(cuid())
+  moduleId    String
+  module      Module              @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  questions   Question[]
+  attempts    AssessmentAttempt[]
+  createdAt   DateTime            @default(now())
+}
+
+model Question {
+  id                 String     @id @default(cuid())
+  assessmentId       String
+  assessment         Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  text               String
+  options            String     // JSON array string
+  correctOptionIndex Int        @default(0)
+}
+
+model AssessmentAttempt {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  traineeId    String
+  trainee      User       @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  score        Float
+  maxScore     Float
+  submittedAt  DateTime   @default(now())
+}
+
+model Certificate {
+  id             String   @id @default(cuid())
+  traineeId      String
+  trainee        User     @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  issuedAt       DateTime @default(now())
+  certificateUrl String
+  note           String?
+
+  @@unique([traineeId, courseId])
+}

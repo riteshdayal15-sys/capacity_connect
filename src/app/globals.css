@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fbfbf9;
+  --foreground: #141416;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --muted: #64748b;
+  --accent: #0f172a;
+}
+
+body {
+  color: var(--foreground);
+  background-color: var(--background);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editorial & Scientific Typography */
+.font-serif-heading {
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
+}
+
+.font-mono-tech {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+}
+
+/* Subtle architectural grid pattern */
+.bg-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+}
+
+.bg-dots-pattern {
+  background-size: 24px 24px;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px);
+}
+
+/* Flat utilitarian editorial components */
+@layer components {
+  .editorial-card {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  }
+
+  .editorial-card-hover {
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  }
+
+  .editorial-card-hover:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  .editorial-button {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 150ms ease-in-out;
+  }
+
+  .editorial-button:hover {
+    background-color: #1e293b;
+    transform: translateY(-0.5px);
+  }
+
+  .editorial-button:active {
+    transform: translateY(0.5px);
+  }
+}
+
+/* ─── Animation System ───────────────────────────────────────────── */
+
+/* Scroll-reveal: fade + slide-up when entering viewport via IntersectionObserver */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays for grid children */
+.stagger-1 { transition-delay: 0ms; }
+.stagger-2 { transition-delay: 80ms; }
+.stagger-3 { transition-delay: 160ms; }
+.stagger-4 { transition-delay: 240ms; }
+.stagger-5 { transition-delay: 320ms; }
+.stagger-6 { transition-delay: 400ms; }
+
+/* Fade-in on page load */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in      { animation: fadeIn  700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in-slow { animation: fadeIn 1100ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Delay utilities */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-900 { animation-delay: 900ms; }
+
+/* Gentle float for 3D globe container */
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+.animate-float { animation: gentleFloat 7s ease-in-out infinite; }
+
+/* Radar ping for telemetry nodes */
+@keyframes radarPing {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  80%  { transform: scale(2.6); opacity: 0; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.animate-radar-ping { animation: radarPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* Horizontal marquee for live ticker strip */
+@keyframes marqueeScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marqueeScroll 38s linear infinite; }
+
+/* Blink for live telemetry dot */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+.animate-blink { animation: blink 1.8s ease-in-out infinite; }
+
+/* Card hover lift */
+.card-lift {
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+}
+.card-lift:hover {
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+}
+
+/* Reduced-motion: honour OS preference */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .animate-fade-in,
+  .animate-fade-in-slow,
+  .animate-float,
+  .animate-radar-ping,
+  .animate-marquee,
+  .animate-blink {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
