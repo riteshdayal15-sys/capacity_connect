@@ -37,3 +37,11 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal agent & skills files
+.agents/
+scratch/
+skills-lock.json
+public/uploads/*
+!public/uploads/.gitkeep
+
