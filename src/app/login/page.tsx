@@ -68,14 +68,25 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError("");
     try {
+      // Step 1: Firebase popup
+      setError("Step 1: Opening Google popup…");
       const { signInWithPopup } = await import("firebase/auth");
       const { auth, googleProvider } = await import("@/lib/firebase");
-
-      const cred = await signInWithPopup(auth, googleProvider);
+      let cred: any;
+      try {
+        cred = await signInWithPopup(auth, googleProvider);
+      } catch (popupErr: any) {
+        throw new Error("Popup failed: " + (popupErr?.code || popupErr?.message));
+      }
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
 
+      // Step 2: Get ID token
+      setError("Step 2: Getting token…");
       const idToken = await fbUser.getIdToken();
+
+      // Step 3: Sync with database
+      setError("Step 3: Syncing account…");
       const syncRes = await fetch("/api/auth/firebase-sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,15 +97,19 @@ export default function LoginPage() {
         }),
       });
       const syncData = await syncRes.json();
-      if (!syncRes.ok) throw new Error(syncData.error || "Google sync failed.");
+      if (!syncRes.ok) throw new Error("Sync failed (" + syncRes.status + "): " + (syncData.error || "unknown"));
 
+      // Step 4: Create NextAuth session
+      setError("Step 4: Creating session…");
       const loginRes = await signIn("credentials", {
         redirect: false,
         email: fbUser.email,
         password: syncData.bridgePassword,
       });
-      if (loginRes?.error) throw new Error("Session creation failed. Please try again.");
+      if (loginRes?.error) throw new Error("Session failed: " + loginRes.error);
 
+      // Success — clear error and redirect
+      setError("");
       const role = syncData.role as string | undefined;
       if (role === "ADMIN") {
         router.push("/admin");
