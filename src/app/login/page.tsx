@@ -106,7 +106,7 @@ export default function LoginPage() {
         email: fbUser.email,
         password: syncData.bridgePassword,
       });
-      if (loginRes?.error) throw new Error("Session failed: " + loginRes.error);
+      if (!loginRes?.ok || loginRes?.error) throw new Error("Session failed: " + (loginRes?.error || "unknown"));
 
       // Success — clear error and redirect
       setError("");

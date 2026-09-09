@@ -103,7 +103,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const secret = process.env.NEXTAUTH_SECRET || "capacity-connect-secret-key";
+    const secret = process.env.NEXTAUTH_SECRET || "moes-capacity-connect-super-secret-key-2025";
     const ts = Date.now().toString();
     const sig = crypto.createHmac("sha256", secret).update(`${cleanEmail}:${ts}`).digest("hex");
     const bridgePassword = `bridge:${ts}:${sig}`;
