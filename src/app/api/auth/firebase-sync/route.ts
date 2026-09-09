@@ -38,14 +38,8 @@ export async function POST(req: Request) {
 
     const projectId =
       process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-      process.env.FIREBASE_PROJECT_ID;
-    if (!projectId) {
-      console.error("firebase-sync misconfigured: missing Firebase project ID env.");
-      return NextResponse.json(
-        { error: "Google sign-in is not configured on the server." },
-        { status: 500 }
-      );
-    }
+      process.env.FIREBASE_PROJECT_ID ||
+      "capacity-count-e83b1";
 
     const cleanEmail = String(email).toLowerCase().trim();
 
