@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -64,15 +64,15 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError("");
+  const handleGoogleRedirectResult = async () => {
     try {
-      const [{ signInWithPopup }, { auth, googleProvider }] = await Promise.all([
+      const [{ getRedirectResult }, { auth }] = await Promise.all([
         import("firebase/auth"),
         import("@/lib/firebase"),
       ]);
-      const cred = await signInWithPopup(auth, googleProvider);
+      const cred = await getRedirectResult(auth);
+      if (!cred) return; // No redirect in progress
+      setGoogleLoading(true);
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
 
@@ -106,7 +106,27 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setError(err?.message || "Google sign-in failed.");
-    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    handleGoogleRedirectResult();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      const [{ signInWithRedirect }, { auth, googleProvider }] = await Promise.all([
+        import("firebase/auth"),
+        import("@/lib/firebase"),
+      ]);
+      await signInWithRedirect(auth, googleProvider);
+      // Page will redirect to Google — no further code executes here
+    } catch (err: any) {
+      setError(err?.message || "Google sign-in failed.");
       setGoogleLoading(false);
     }
   };
