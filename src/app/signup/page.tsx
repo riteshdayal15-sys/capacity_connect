@@ -88,12 +88,14 @@ export default function SignUpPage() {
 
   const handleGoogleRedirectResult = async () => {
     try {
-      const [{ getRedirectResult }, { auth }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase"),
-      ]);
+      const { getRedirectResult, browserLocalPersistence, setPersistence } = await import("firebase/auth");
+      const { auth } = await import("@/lib/firebase");
+
+      await setPersistence(auth, browserLocalPersistence);
+
       const cred = await getRedirectResult(auth);
-      if (!cred) return; // No redirect in progress
+      if (!cred) return; // No pending redirect — normal page load
+
       setGoogleLoading(true);
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
@@ -117,10 +119,11 @@ export default function SignUpPage() {
         email: fbUser.email,
         password: syncData.bridgePassword,
       });
-      if (loginRes?.error) throw new Error(loginRes.error);
+      if (loginRes?.error) throw new Error("Session creation failed. Please try again.");
 
       router.push(syncData.role === "TRAINER" ? "/trainer" : "/trainee");
     } catch (err: any) {
+      if (err?.code === "auth/no-auth-event" || err?.code === "auth/operation-not-supported-in-this-environment") return;
       setError(err?.message || "Google sign-up failed.");
       setGoogleLoading(false);
     }
@@ -135,12 +138,11 @@ export default function SignUpPage() {
     setGoogleLoading(true);
     setError("");
     try {
-      const [{ signInWithRedirect }, { auth, googleProvider }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase"),
-      ]);
+      const { signInWithRedirect, browserLocalPersistence, setPersistence } = await import("firebase/auth");
+      const { auth, googleProvider } = await import("@/lib/firebase");
+      await setPersistence(auth, browserLocalPersistence);
       await signInWithRedirect(auth, googleProvider);
-      // Page will redirect to Google — no further code executes here
+      // Page navigates away — no code runs after this
     } catch (err: any) {
       setError(err?.message || "Google sign-up failed.");
       setGoogleLoading(false);

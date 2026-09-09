@@ -1,5 +1,11 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  Auth,
+  browserLocalPersistence,
+  setPersistence,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAyCxf-7pYjZJE0a3NvhbLnIBPpWee7r7A",
@@ -21,6 +27,13 @@ if (!getApps().length) {
 }
 
 export const auth: Auth = getAuth(app);
+
+// Persist auth state in localStorage so getRedirectResult() can recover
+// the pending credential after signInWithRedirect() causes a full page reload.
+if (typeof window !== "undefined") {
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+}
+
 export const googleProvider = new GoogleAuthProvider();
-// Optional: force account chooser every time
+// Force account chooser every time
 googleProvider.setCustomParameters({ prompt: "select_account" });

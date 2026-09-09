@@ -66,12 +66,16 @@ export default function LoginPage() {
 
   const handleGoogleRedirectResult = async () => {
     try {
-      const [{ getRedirectResult }, { auth }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase"),
-      ]);
+      const { getRedirectResult, browserLocalPersistence, setPersistence } = await import("firebase/auth");
+      const { auth, googleProvider: _gp } = await import("@/lib/firebase");
+
+      // Must await persistence before reading the redirect result, otherwise
+      // the in-memory auth instance won't have the pending credential yet.
+      await setPersistence(auth, browserLocalPersistence);
+
       const cred = await getRedirectResult(auth);
-      if (!cred) return; // No redirect in progress
+      if (!cred) return; // No pending redirect — normal page load
+
       setGoogleLoading(true);
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
@@ -94,7 +98,7 @@ export default function LoginPage() {
         email: fbUser.email,
         password: syncData.bridgePassword,
       });
-      if (loginRes?.error) throw new Error(loginRes.error);
+      if (loginRes?.error) throw new Error("Session creation failed. Please try again.");
 
       const role = syncData.role as string | undefined;
       if (role === "ADMIN") {
@@ -105,6 +109,8 @@ export default function LoginPage() {
         router.push("/trainee");
       }
     } catch (err: any) {
+      // Ignore "no redirect" errors silently; surface real failures
+      if (err?.code === "auth/no-auth-event" || err?.code === "auth/operation-not-supported-in-this-environment") return;
       setError(err?.message || "Google sign-in failed.");
       setGoogleLoading(false);
     }
@@ -119,12 +125,11 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError("");
     try {
-      const [{ signInWithRedirect }, { auth, googleProvider }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase"),
-      ]);
+      const { signInWithRedirect, browserLocalPersistence, setPersistence } = await import("firebase/auth");
+      const { auth, googleProvider } = await import("@/lib/firebase");
+      await setPersistence(auth, browserLocalPersistence);
       await signInWithRedirect(auth, googleProvider);
-      // Page will redirect to Google — no further code executes here
+      // Page navigates away — no code runs after this
     } catch (err: any) {
       setError(err?.message || "Google sign-in failed.");
       setGoogleLoading(false);
