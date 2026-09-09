@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -64,19 +64,14 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleRedirectResult = async () => {
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError("");
     try {
-      const { getRedirectResult, browserLocalPersistence, setPersistence } = await import("firebase/auth");
-      const { auth, googleProvider: _gp } = await import("@/lib/firebase");
+      const { signInWithPopup } = await import("firebase/auth");
+      const { auth, googleProvider } = await import("@/lib/firebase");
 
-      // Must await persistence before reading the redirect result, otherwise
-      // the in-memory auth instance won't have the pending credential yet.
-      await setPersistence(auth, browserLocalPersistence);
-
-      const cred = await getRedirectResult(auth);
-      if (!cred) return; // No pending redirect — normal page load
-
-      setGoogleLoading(true);
+      const cred = await signInWithPopup(auth, googleProvider);
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
 
@@ -109,29 +104,8 @@ export default function LoginPage() {
         router.push("/trainee");
       }
     } catch (err: any) {
-      // Ignore "no redirect" errors silently; surface real failures
-      if (err?.code === "auth/no-auth-event" || err?.code === "auth/operation-not-supported-in-this-environment") return;
       setError(err?.message || "Google sign-in failed.");
-      setGoogleLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    handleGoogleRedirectResult();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError("");
-    try {
-      const { signInWithRedirect, browserLocalPersistence, setPersistence } = await import("firebase/auth");
-      const { auth, googleProvider } = await import("@/lib/firebase");
-      await setPersistence(auth, browserLocalPersistence);
-      await signInWithRedirect(auth, googleProvider);
-      // Page navigates away — no code runs after this
-    } catch (err: any) {
-      setError(err?.message || "Google sign-in failed.");
+    } finally {
       setGoogleLoading(false);
     }
   };

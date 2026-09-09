@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -86,17 +86,14 @@ export default function SignUpPage() {
     }
   };
 
-  const handleGoogleRedirectResult = async () => {
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    setError("");
     try {
-      const { getRedirectResult, browserLocalPersistence, setPersistence } = await import("firebase/auth");
-      const { auth } = await import("@/lib/firebase");
+      const { signInWithPopup } = await import("firebase/auth");
+      const { auth, googleProvider } = await import("@/lib/firebase");
 
-      await setPersistence(auth, browserLocalPersistence);
-
-      const cred = await getRedirectResult(auth);
-      if (!cred) return; // No pending redirect — normal page load
-
-      setGoogleLoading(true);
+      const cred = await signInWithPopup(auth, googleProvider);
       const fbUser = cred.user;
       if (!fbUser.email) throw new Error("Google did not return an email.");
 
@@ -123,28 +120,8 @@ export default function SignUpPage() {
 
       router.push(syncData.role === "TRAINER" ? "/trainer" : "/trainee");
     } catch (err: any) {
-      if (err?.code === "auth/no-auth-event" || err?.code === "auth/operation-not-supported-in-this-environment") return;
       setError(err?.message || "Google sign-up failed.");
-      setGoogleLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    handleGoogleRedirectResult();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError("");
-    try {
-      const { signInWithRedirect, browserLocalPersistence, setPersistence } = await import("firebase/auth");
-      const { auth, googleProvider } = await import("@/lib/firebase");
-      await setPersistence(auth, browserLocalPersistence);
-      await signInWithRedirect(auth, googleProvider);
-      // Page navigates away — no code runs after this
-    } catch (err: any) {
-      setError(err?.message || "Google sign-up failed.");
+    } finally {
       setGoogleLoading(false);
     }
   };
