@@ -40,24 +40,21 @@ export default function LoginPage() {
         password: targetPassword,
       });
 
-      if (res?.error) {
-        setError("Invalid email or password. Please verify credentials.");
+      if (!res?.ok || res?.error) {
+        setError(
+          res?.error === "CredentialsSignin"
+            ? "Invalid email or password. Please verify credentials."
+            : `Sign in failed (${res?.status || "error"}): ${res?.error || "Unknown"}`
+        );
         setLoading(false);
         return;
       }
 
       const session = await getSession();
       const role = (session?.user as any)?.role;
-
-      if (role === "ADMIN") {
-        router.push("/admin");
-      } else if (role === "TRAINER") {
-        router.push("/trainer");
-      } else if (role === "TRAINEE") {
-        router.push("/trainee");
-      } else {
-        router.push("/");
-      }
+      const targetPath =
+        role === "ADMIN" ? "/admin" : role === "TRAINER" ? "/trainer" : "/trainee";
+      window.location.href = targetPath;
     } catch (err: any) {
       setError("Sign in error: " + err.message);
       setLoading(false);
@@ -108,16 +105,12 @@ export default function LoginPage() {
       });
       if (!loginRes?.ok || loginRes?.error) throw new Error("Session failed: " + (loginRes?.error || "unknown"));
 
-      // Success — clear error and redirect
+      // Success — full browser navigation with session cookie
       setError("");
       const role = syncData.role as string | undefined;
-      if (role === "ADMIN") {
-        router.push("/admin");
-      } else if (role === "TRAINER") {
-        router.push("/trainer");
-      } else {
-        router.push("/trainee");
-      }
+      const targetPath =
+        role === "ADMIN" ? "/admin" : role === "TRAINER" ? "/trainer" : "/trainee";
+      window.location.href = targetPath;
     } catch (err: any) {
       setError(err?.message || "Google sign-in failed.");
     } finally {

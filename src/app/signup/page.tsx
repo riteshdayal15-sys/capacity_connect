@@ -74,12 +74,12 @@ export default function SignUpPage() {
         password,
       });
 
-      if (loginRes?.error) {
-        router.push("/login");
+      if (!loginRes?.ok || loginRes?.error) {
+        window.location.href = "/login";
         return;
       }
 
-      router.push("/trainee");
+      window.location.href = "/trainee";
     } catch (err: any) {
       setError(err.message || "An error occurred during account creation.");
       setLoading(false);
@@ -116,9 +116,9 @@ export default function SignUpPage() {
         email: fbUser.email,
         password: syncData.bridgePassword,
       });
-      if (loginRes?.error) throw new Error("Session creation failed. Please try again.");
+      if (!loginRes?.ok || loginRes?.error) throw new Error("Session creation failed. Please try again.");
 
-      router.push(syncData.role === "TRAINER" ? "/trainer" : "/trainee");
+      window.location.href = syncData.role === "TRAINER" ? "/trainer" : "/trainee";
     } catch (err: any) {
       setError(err?.message || "Google sign-up failed.");
     } finally {

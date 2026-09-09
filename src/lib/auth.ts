@@ -5,10 +5,14 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || "moes-capacity-connect-super-secret-key-2025";
-if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === "production") {
-  throw new Error("CRITICAL: NEXTAUTH_SECRET environment variable must be set in production.");
+if (!process.env.NEXTAUTH_SECRET) {
+  process.env.NEXTAUTH_SECRET = "moes-capacity-connect-super-secret-key-2025";
 }
+if (process.env.VERCEL_URL && !process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+}
+
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 const providers: any[] = [
   CredentialsProvider({
