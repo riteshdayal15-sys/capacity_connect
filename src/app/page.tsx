@@ -34,13 +34,7 @@ const EarthGlobe3D = dynamic(
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
-
-  if (session?.user) {
-    const role = (session.user as any).role;
-    if (role === "ADMIN") redirect("/admin");
-    if (role === "TRAINER") redirect("/trainer");
-    if (role === "TRAINEE") redirect("/trainee");
-  }
+  const userRole = (session?.user as any)?.role as "ADMIN" | "TRAINER" | "TRAINEE" | undefined;
 
   // Live SQLite metrics
   const [traineeCount, courseCount, blockCount, attemptCount] = await Promise.all([
@@ -163,18 +157,29 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Link
-              href="/login"
-              className="px-3.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:text-zinc-950 hover:bg-zinc-100 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="px-4 py-1.5 rounded text-xs font-medium text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-            >
-              Sign Up
-            </Link>
+            {userRole ? (
+              <Link
+                href={`/${userRole.toLowerCase()}`}
+                className="px-4 py-1.5 rounded text-xs font-medium text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              >
+                Go to {userRole} Desk &rarr;
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-3.5 py-1.5 rounded text-xs font-medium text-zinc-800 hover:text-zinc-950 hover:bg-zinc-100 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="px-4 py-1.5 rounded text-xs font-medium text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -202,19 +207,31 @@ export default async function HomePage() {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3.5 pt-2 animate-fade-in delay-300">
-                  <Link
-                    href="/signup"
-                    className="px-5 py-2.5 rounded font-medium text-xs text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)] inline-flex items-center active:scale-[0.98]"
-                  >
-                    <span>Get Started</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="px-5 py-2.5 rounded font-medium text-xs text-zinc-800 bg-white hover:bg-zinc-50 border border-zinc-300 transition-colors inline-flex items-center active:scale-[0.98]"
-                  >
-                    <span>Sign In</span>
-                  </Link>
+                  {userRole ? (
+                    <Link
+                      href={`/${userRole.toLowerCase()}`}
+                      className="px-5 py-2.5 rounded font-medium text-xs text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)] inline-flex items-center active:scale-[0.98]"
+                    >
+                      <span>Open {userRole} Console</span>
+                      <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        href="/signup"
+                        className="px-5 py-2.5 rounded font-medium text-xs text-white bg-zinc-950 hover:bg-zinc-800 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08)] inline-flex items-center active:scale-[0.98]"
+                      >
+                        <span>Get Started</span>
+                        <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                      </Link>
+                      <Link
+                        href="/login"
+                        className="px-5 py-2.5 rounded font-medium text-xs text-zinc-800 bg-white hover:bg-zinc-50 border border-zinc-300 transition-colors inline-flex items-center active:scale-[0.98]"
+                      >
+                        <span>Sign In</span>
+                      </Link>
+                    </>
+                  )}
                 </div>
 
                 {/* Live metric pills */}
