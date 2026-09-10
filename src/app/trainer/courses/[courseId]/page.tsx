@@ -77,6 +77,18 @@ export default function TrainerCourseDetailPage() {
       }
       const data = await res.json();
       setCourse(data);
+
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get("action");
+        if (action === "upload_syllabus") {
+          setEditTitle(data.title || "");
+          setEditDescription(data.description || "");
+          setShowSyllabusModal(true);
+        } else if (action === "add_module") {
+          setShowModuleModal(true);
+        }
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load course details");
     } finally {
