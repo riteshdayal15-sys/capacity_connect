@@ -114,17 +114,42 @@ export default function CreateCoursePage() {
 
   useEffect(() => {
     async function loadBlocks() {
-      const res = await fetch("/api/competency-blocks");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setBlocks(data);
-        if (data.length > 0) {
-          setCompetencyBlockId(data[0].id);
+      try {
+        const res = await fetch("/api/competency-blocks");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const assignedId = (session?.user as any)?.assignedBlockId;
+          const specialization = (session?.user as any)?.specialization;
+
+          if (assignedId) {
+            const matched = data.filter((b: any) => b.id === assignedId);
+            if (matched.length > 0) {
+              setBlocks(matched);
+              setCompetencyBlockId(assignedId);
+              return;
+            }
+          } else if (specialization) {
+            const matched = data.filter((b: any) =>
+              b.title.toLowerCase().trim() === specialization.toLowerCase().trim()
+            );
+            if (matched.length > 0) {
+              setBlocks(matched);
+              setCompetencyBlockId(matched[0].id);
+              return;
+            }
+          }
+
+          setBlocks(data);
+          if (data.length > 0) {
+            setCompetencyBlockId(data[0].id);
+          }
         }
+      } catch (e) {
+        console.error("Failed to load competency blocks", e);
       }
     }
     loadBlocks();
-  }, []);
+  }, [session]);
 
   // Manual submission
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -330,13 +355,25 @@ Cadre: Early Warning & Ocean Hazard Management
 
         {/* Common: Competency Discipline Selection */}
         <div className="p-4 rounded-lg bg-white border border-zinc-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-1.5">
-          <label className="block text-xs font-semibold text-zinc-950">
-            Target Competency Discipline (Cadre Pathway)
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-zinc-950">
+              Target Competency Discipline (Cadre Pathway)
+            </label>
+            {((session?.user as any)?.assignedBlockId || (session?.user as any)?.specialization) && (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+                Locked to Assigned Specialization
+              </span>
+            )}
+          </div>
           <select
             value={competencyBlockId}
             onChange={(e) => setCompetencyBlockId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md bg-white border border-zinc-200 text-zinc-900 text-xs focus:outline-none focus:border-zinc-900"
+            disabled={blocks.length === 1}
+            className={`w-full px-3 py-2 rounded-md border text-xs focus:outline-none ${
+              blocks.length === 1
+                ? "bg-zinc-50 border-zinc-200 text-zinc-800 cursor-not-allowed font-medium"
+                : "bg-white border-zinc-200 text-zinc-900 focus:border-zinc-900"
+            }`}
           >
             {blocks.map((b) => (
               <option key={b.id} value={b.id}>
@@ -345,7 +382,9 @@ Cadre: Early Warning & Ocean Hazard Management
             ))}
           </select>
           <p className="text-[11px] text-zinc-500">
-            Officers enrolled in this pathway will be awarded accredited MoES digital certificates upon completion.
+            {blocks.length === 1
+              ? "Subject-Specific RBAC: Your credentials authorize you to publish curriculum strictly within this designated pathway."
+              : "Officers enrolled in this pathway will be awarded accredited MoES digital certificates upon completion."}
           </p>
         </div>
 

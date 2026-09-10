@@ -88,16 +88,27 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  // Only admins may modify personnel roles/departments
+  // Only admins may modify personnel roles/departments/specializations
   const auth = await requireApiAuth(["ADMIN"]);
   if ("unauthorized" in auth) return auth.unauthorized;
   try {
-    const { userId, role, department, trainerStatus } = await req.json();
+    const { userId, role, department, trainerStatus, assignedBlockId, specialization } = await req.json();
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
     if (role && !ASSIGNABLE_ROLES.includes(role)) {
       return NextResponse.json({ error: "Invalid role specified" }, { status: 400 });
+    }
+
+    let finalSpecialization = specialization;
+    if (assignedBlockId) {
+      const block = await prisma.competencyBlock.findUnique({
+        where: { id: assignedBlockId },
+        select: { title: true },
+      });
+      if (block) {
+        finalSpecialization = block.title;
+      }
     }
 
     const updated = await prisma.user.update({
@@ -106,6 +117,8 @@ export async function PATCH(req: Request) {
         ...(role ? { role } : {}),
         ...(department ? { department } : {}),
         ...(trainerStatus ? { trainerStatus } : {}),
+        ...(assignedBlockId !== undefined ? { assignedBlockId: assignedBlockId || null } : {}),
+        ...(finalSpecialization !== undefined ? { specialization: finalSpecialization || null } : {}),
       },
       select: safeUserSelect,
     });

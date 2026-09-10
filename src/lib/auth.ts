@@ -72,6 +72,8 @@ const providers: any[] = [
         email: user.email,
         role: user.role,
         department: user.department,
+        specialization: user.specialization,
+        assignedBlockId: user.assignedBlockId,
       };
     },
   }),
@@ -132,15 +134,26 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         token.department = (user as any).department;
+        token.specialization = (user as any).specialization;
+        token.assignedBlockId = (user as any).assignedBlockId;
       } else if (token.id) {
-        // Fetch up-to-date role and department from database in case role changed (e.g. approved as TRAINER)
+        // Fetch up-to-date role, department, and assigned specialization from database
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, department: true },
+          select: {
+            role: true,
+            department: true,
+            specialization: true,
+            assignedBlockId: true,
+            assignedBlock: { select: { title: true } },
+          },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.department = dbUser.department;
+          token.specialization = dbUser.specialization || dbUser.assignedBlock?.title || undefined;
+          token.assignedBlockId = dbUser.assignedBlockId || undefined;
+          token.assignedBlockTitle = dbUser.assignedBlock?.title || undefined;
         }
       }
       return token;
@@ -150,6 +163,9 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
         (session.user as any).department = token.department as string;
+        (session.user as any).specialization = token.specialization as string | undefined;
+        (session.user as any).assignedBlockId = token.assignedBlockId as string | undefined;
+        (session.user as any).assignedBlockTitle = token.assignedBlockTitle as string | undefined;
       }
       return session;
     },

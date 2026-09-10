@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { requireApiAuth } from "@/lib/api-auth";
+import { requireApiAuth, validateTrainerSubjectAccess } from "@/lib/api-auth";
 
 export async function POST(req: Request) {
   const auth = await requireApiAuth(["ADMIN", "TRAINER"]);
@@ -14,6 +14,12 @@ export async function POST(req: Request) {
         { error: "Missing required fields (competencyBlockId, title, and at least 1 module)." },
         { status: 400 }
       );
+    }
+
+    // Enforce subject-specific RBAC: trainers can only publish courses in their assigned pathway
+    const subjectCheck = validateTrainerSubjectAccess(auth.session, competencyBlockId);
+    if (!subjectCheck.allowed) {
+      return NextResponse.json({ error: subjectCheck.reason }, { status: 403 });
     }
 
     const trainerId = auth.session.id;

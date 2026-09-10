@@ -18,6 +18,8 @@ import {
   Video,
   Image as ImageIcon,
   Link2,
+  Compass,
+  ShieldCheck,
 } from "lucide-react";
 
 export default async function TrainerDashboardPage() {
@@ -36,40 +38,36 @@ export default async function TrainerDashboardPage() {
 
   const userId = (session.user as any).id;
 
-  // Fetch trainer's authored courses as well as all directorate courses
-  const [myCourses, allCourses] = await Promise.all([
-    prisma.course.findMany({
-      where: userRole === "ADMIN" ? {} : { trainerId: userId },
-      include: {
-        competencyBlock: true,
-        trainer: { select: { name: true, email: true, department: true } },
-        modules: {
-          include: {
-            assessments: true,
-          },
-        },
-        enrollments: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.course.findMany({
-      include: {
-        competencyBlock: true,
-        trainer: { select: { name: true, email: true, department: true } },
-        modules: {
-          include: {
-            assessments: true,
-          },
-        },
-        enrollments: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  // Fetch trainer profile with assigned competency subject pathway
+  const dbTrainer = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { assignedBlock: true },
+  });
 
-  // If the user has not authored any course yet, show all institute courses so they can collaborate and upload content
-  const courses = myCourses.length > 0 ? myCourses : allCourses;
-  const isShowingAll = myCourses.length === 0 && allCourses.length > 0;
+  const assignedBlock = dbTrainer?.assignedBlock;
+  const specialization = dbTrainer?.specialization || assignedBlock?.title;
+
+  // Strict Subject-Specific Filter:
+  // Trainer can only manage courses within their assigned subject pathway and that they author
+  const courseWhere: any = userRole === "ADMIN" ? {} : { trainerId: userId };
+  if (userRole !== "ADMIN" && dbTrainer?.assignedBlockId) {
+    courseWhere.competencyBlockId = dbTrainer.assignedBlockId;
+  }
+
+  const courses = await prisma.course.findMany({
+    where: courseWhere,
+    include: {
+      competencyBlock: true,
+      trainer: { select: { name: true, email: true, department: true } },
+      modules: {
+        include: {
+          assessments: true,
+        },
+      },
+      enrollments: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="min-h-screen bg-[#FBFBF9] text-zinc-900 selection:bg-zinc-200 selection:text-zinc-950">
@@ -113,6 +111,35 @@ export default async function TrainerDashboardPage() {
           </div>
         </div>
 
+        {/* Trainer Specialization Pathway Banner */}
+        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-blue-50/70 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+              <Compass className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-emerald-100/90 text-emerald-900 border border-emerald-300/70">
+                  Assigned Specialization Pathway
+                </span>
+                {assignedBlock?.category && (
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    ({assignedBlock.category})
+                  </span>
+                )}
+              </div>
+              <h2 className="text-sm font-bold text-zinc-950 mt-0.5">
+                {specialization || "General Scientific Domain (Unassigned)"}
+              </h2>
+            </div>
+          </div>
+          <div className="text-left sm:text-right shrink-0">
+            <span className="text-xs font-mono font-medium text-zinc-600">
+              {courses.length} {courses.length === 1 ? "Program" : "Programs"} in Subject
+            </span>
+          </div>
+        </div>
+
         {/* Content & Syllabus Quick Upload Banner */}
         <div className="p-5 rounded-xl bg-white border border-zinc-200/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
@@ -122,7 +149,7 @@ export default async function TrainerDashboardPage() {
             <div>
               <h2 className="text-sm font-semibold text-zinc-950">Add &amp; Upload Curriculum Content</h2>
               <p className="text-xs text-zinc-600 mt-0.5">
-                Upload official SOP PDFs, lecture slides, video guides, or syllabus documents. Click <strong>Upload Content</strong> or <strong>Add Module</strong> on any track below.
+                Upload official SOP PDFs, manual text, YouTube videos, photos, or reference links within your pathway.
               </p>
             </div>
           </div>
@@ -142,12 +169,10 @@ export default async function TrainerDashboardPage() {
           <div>
             <h2 className="text-sm font-semibold text-zinc-950 flex items-center">
               <Layers className="w-4 h-4 mr-2 text-zinc-700" />
-              {isShowingAll ? "MoES Directorate Curriculum Tracks" : "My Authored Curriculum Tracks"}
+              My Authored Curriculum Tracks
             </h2>
             <p className="text-xs text-zinc-500 mt-0.5">
-              {isShowingAll
-                ? "Displaying MoES federated institute courses. Select any course to add modules or upload syllabus content."
-                : "Manage syllabus files, procedural modules, and cadet rosters."}
+              Authorized courses within {specialization || "your assigned specialization"}.
             </p>
           </div>
           <span className="text-xs font-mono text-zinc-500">{courses.length} Programs</span>
@@ -157,9 +182,11 @@ export default async function TrainerDashboardPage() {
         {courses.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-lg border border-zinc-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.02)] space-y-3">
             <Layers className="w-8 h-8 text-zinc-400 mx-auto" />
-            <h3 className="text-sm font-semibold text-zinc-950">No courses available yet</h3>
+            <h3 className="text-sm font-semibold text-zinc-950">
+              No courses created in {specialization || "your pathway"} yet
+            </h3>
             <p className="text-xs text-zinc-600 max-w-sm mx-auto">
-              Upload an official SOP document or create your first specialized curriculum track.
+              Author your first course or upload an official SOP document in your specialization.
             </p>
             <div className="pt-2">
               <Link
@@ -167,7 +194,7 @@ export default async function TrainerDashboardPage() {
                 className="px-4 py-2 rounded-md bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-white inline-flex items-center"
               >
                 <UploadCloud className="w-3.5 h-3.5 mr-1.5" />
-                <span>Upload First Course Document</span>
+                <span>Create Course in {specialization || "Subject"}</span>
               </Link>
             </div>
           </div>

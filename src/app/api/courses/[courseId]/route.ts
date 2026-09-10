@@ -34,10 +34,20 @@ export async function GET(
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    // Only the course authoring trainer or an admin may view the full trainee roster
-    if (auth.session.role === "TRAINER" && course.trainerId !== auth.session.id) {
-      const { enrollments, ...safeCourse } = course;
-      return NextResponse.json(sanitizeCourseForRole(safeCourse, auth.session.role));
+    // Subject-Specific RBAC: Trainers can only access their own authored courses within their assigned subject
+    if (auth.session.role === "TRAINER") {
+      if (course.trainerId !== auth.session.id) {
+        return NextResponse.json(
+          { error: "Forbidden. You cannot access courses belonging to other trainers." },
+          { status: 403 }
+        );
+      }
+      if (auth.session.assignedBlockId && course.competencyBlockId !== auth.session.assignedBlockId) {
+        return NextResponse.json(
+          { error: `Forbidden. You are assigned to "${auth.session.specialization || "another specialization"}". You cannot access courses in other subjects.` },
+          { status: 403 }
+        );
+      }
     }
 
     return NextResponse.json(sanitizeCourseForRole(course, auth.session.role));
@@ -58,18 +68,26 @@ export async function PATCH(
 
     const course = await prisma.course.findUnique({
       where: { id: params.courseId },
-      select: { id: true, trainerId: true },
+      select: { id: true, trainerId: true, competencyBlockId: true },
     });
 
     if (!course) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    if (auth.session.role !== "ADMIN" && course.trainerId !== auth.session.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You may only edit your own authored courses." },
-        { status: 403 }
-      );
+    if (auth.session.role !== "ADMIN") {
+      if (course.trainerId !== auth.session.id) {
+        return NextResponse.json(
+          { error: "Forbidden. You may only edit your own authored courses." },
+          { status: 403 }
+        );
+      }
+      if (auth.session.assignedBlockId && course.competencyBlockId !== auth.session.assignedBlockId) {
+        return NextResponse.json(
+          { error: "Forbidden. You cannot edit courses outside your assigned subject." },
+          { status: 403 }
+        );
+      }
     }
 
     const updated = await prisma.course.update({
@@ -95,18 +113,26 @@ export async function DELETE(
   try {
     const course = await prisma.course.findUnique({
       where: { id: params.courseId },
-      select: { id: true, trainerId: true },
+      select: { id: true, trainerId: true, competencyBlockId: true },
     });
 
     if (!course) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    if (auth.session.role !== "ADMIN" && course.trainerId !== auth.session.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You may only delete your own authored courses." },
-        { status: 403 }
-      );
+    if (auth.session.role !== "ADMIN") {
+      if (course.trainerId !== auth.session.id) {
+        return NextResponse.json(
+          { error: "Forbidden. You may only delete your own authored courses." },
+          { status: 403 }
+        );
+      }
+      if (auth.session.assignedBlockId && course.competencyBlockId !== auth.session.assignedBlockId) {
+        return NextResponse.json(
+          { error: "Forbidden. You cannot delete courses outside your assigned subject." },
+          { status: 403 }
+        );
+      }
     }
 
     await prisma.course.delete({ where: { id: params.courseId } });

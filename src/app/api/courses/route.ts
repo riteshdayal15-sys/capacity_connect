@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { requireApiAuth, sanitizeCourseForRole } from "@/lib/api-auth";
+import { requireApiAuth, sanitizeCourseForRole, validateTrainerSubjectAccess } from "@/lib/api-auth";
 
 export async function GET(req: Request) {
   const auth = await requireApiAuth();
@@ -12,6 +12,14 @@ export async function GET(req: Request) {
     const where: any = {};
     if (trainerId) {
       where.trainerId = trainerId;
+    }
+
+    // For trainers, restrict to their own courses in their assigned specialization subject
+    if (auth.session.role === "TRAINER") {
+      where.trainerId = auth.session.id;
+      if (auth.session.assignedBlockId) {
+        where.competencyBlockId = auth.session.assignedBlockId;
+      }
     }
 
     const courses = await prisma.course.findMany({
@@ -51,6 +59,12 @@ export async function POST(req: Request) {
 
     if (!title || !competencyBlockId || !effectiveTrainerId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // Enforce subject-specific RBAC: trainers can only create courses in their assigned pathway
+    const subjectCheck = validateTrainerSubjectAccess(auth.session, competencyBlockId);
+    if (!subjectCheck.allowed) {
+      return NextResponse.json({ error: subjectCheck.reason }, { status: 403 });
     }
 
     const course = await prisma.course.create({

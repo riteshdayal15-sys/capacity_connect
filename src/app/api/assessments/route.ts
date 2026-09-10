@@ -14,18 +14,26 @@ export async function POST(req: Request) {
 
     const moduleRecord = await prisma.module.findUnique({
       where: { id: moduleId },
-      include: { course: { select: { trainerId: true } } },
+      include: { course: { select: { trainerId: true, competencyBlockId: true } } },
     });
 
     if (!moduleRecord) {
       return NextResponse.json({ error: "Module not found" }, { status: 404 });
     }
 
-    if (auth.session.role !== "ADMIN" && moduleRecord.course.trainerId !== auth.session.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You can only create assessments for your own course modules." },
-        { status: 403 }
-      );
+    if (auth.session.role !== "ADMIN") {
+      if (moduleRecord.course.trainerId !== auth.session.id) {
+        return NextResponse.json(
+          { error: "Forbidden. You can only create assessments for your own course modules." },
+          { status: 403 }
+        );
+      }
+      if (auth.session.assignedBlockId && moduleRecord.course.competencyBlockId !== auth.session.assignedBlockId) {
+        return NextResponse.json(
+          { error: "Forbidden. You cannot create assessments for courses outside your assigned subject." },
+          { status: 403 }
+        );
+      }
     }
 
     const assessment = await prisma.assessment.create({
@@ -71,7 +79,7 @@ export async function DELETE(req: Request) {
       where: { id: assessmentId },
       include: {
         module: {
-          include: { course: { select: { trainerId: true } } },
+          include: { course: { select: { trainerId: true, competencyBlockId: true } } },
         },
       },
     });
@@ -80,11 +88,19 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
     }
 
-    if (auth.session.role !== "ADMIN" && assessment.module.course.trainerId !== auth.session.id) {
-      return NextResponse.json(
-        { error: "Forbidden. You may only delete assessments from your own courses." },
-        { status: 403 }
-      );
+    if (auth.session.role !== "ADMIN") {
+      if (assessment.module.course.trainerId !== auth.session.id) {
+        return NextResponse.json(
+          { error: "Forbidden. You may only delete assessments from your own courses." },
+          { status: 403 }
+        );
+      }
+      if (auth.session.assignedBlockId && assessment.module.course.competencyBlockId !== auth.session.assignedBlockId) {
+        return NextResponse.json(
+          { error: "Forbidden. You cannot delete assessments for courses outside your assigned subject." },
+          { status: 403 }
+        );
+      }
     }
 
     await prisma.assessment.delete({ where: { id: assessmentId } });

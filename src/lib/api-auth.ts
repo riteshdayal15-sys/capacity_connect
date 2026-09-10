@@ -9,6 +9,9 @@ export interface ApiSession {
   role: ApiRole;
   department?: string;
   email?: string | null;
+  specialization?: string;
+  assignedBlockId?: string;
+  assignedBlockTitle?: string;
 }
 
 /**
@@ -46,6 +49,9 @@ export async function requireApiAuth(
       role: user.role as ApiRole,
       department: user.department,
       email: user.email,
+      specialization: user.specialization,
+      assignedBlockId: user.assignedBlockId,
+      assignedBlockTitle: user.assignedBlockTitle,
     },
   };
 }
@@ -58,6 +64,51 @@ export function ownsRecordOrAdmin(session: ApiSession, targetUserId: string): bo
   return session.id === targetUserId || session.role === "ADMIN";
 }
 
+/**
+ * Subject-specific RBAC check for trainers.
+ * Admin has unrestricted access across all subjects.
+ * Trainers can only manage courses within their assigned subject pathway AND that they author.
+ */
+export function canTrainerManageCourse(
+  session: ApiSession,
+  course: { trainerId: string; competencyBlockId?: string }
+): boolean {
+  if (session.role === "ADMIN") return true;
+  if (session.role !== "TRAINER") return false;
+
+  // Must author the course
+  if (course.trainerId !== session.id) return false;
+
+  // If trainer has an assigned subject block, the course must belong to that subject
+  if (session.assignedBlockId && course.competencyBlockId) {
+    return course.competencyBlockId === session.assignedBlockId;
+  }
+
+  return true;
+}
+
+/**
+ * Validates whether a trainer is authorized to create/publish courses in a given competency block.
+ */
+export function validateTrainerSubjectAccess(
+  session: ApiSession,
+  competencyBlockId: string
+): { allowed: boolean; reason?: string } {
+  if (session.role === "ADMIN") return { allowed: true };
+  if (session.role !== "TRAINER") {
+    return { allowed: false, reason: "Only trainers and admins can author curricula." };
+  }
+
+  if (session.assignedBlockId && session.assignedBlockId !== competencyBlockId) {
+    return {
+      allowed: false,
+      reason: `Forbidden. You are assigned to "${session.specialization || session.assignedBlockTitle || "another specialization"}". You cannot manage courses in this subject.`,
+    };
+  }
+
+  return { allowed: true };
+}
+
 /** Safe public user shape — NEVER include passwordHash. */
 export const safeUserSelect = {
   id: true,
@@ -67,6 +118,15 @@ export const safeUserSelect = {
   department: true,
   trainerStatus: true,
   trainerRequestNote: true,
+  specialization: true,
+  assignedBlockId: true,
+  assignedBlock: {
+    select: {
+      id: true,
+      title: true,
+      category: true,
+    },
+  },
   createdAt: true,
 } as const;
 

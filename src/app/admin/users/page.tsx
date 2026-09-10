@@ -26,6 +26,19 @@ export default function AdminUsersPage() {
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvSuccess, setCsvSuccess] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [blocks, setBlocks] = useState<any[]>([]);
+
+  const fetchBlocks = async () => {
+    try {
+      const res = await fetch("/api/competency-blocks");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setBlocks(data);
+      }
+    } catch (err) {
+      console.error("Failed to load competency blocks:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -61,6 +74,36 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleSpecializationChange = async (userId: string, assignedBlockId: string) => {
+    setUpdatingId(userId);
+    try {
+      const res = await fetch("/api/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, assignedBlockId }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? {
+                  ...u,
+                  assignedBlockId: updated.assignedBlockId,
+                  specialization: updated.specialization,
+                  assignedBlock: updated.assignedBlock,
+                }
+              : u
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update specialization:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleTrainerApproval = async (userId: string, action: "APPROVE" | "REJECT") => {
     setUpdatingId(userId);
     try {
@@ -91,6 +134,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    fetchBlocks();
   }, []);
 
   const handleSingleInvite = async (e: React.FormEvent) => {
@@ -307,6 +351,7 @@ export default function AdminUsersPage() {
                   <th className="px-6 py-3.5">Name &amp; Identity</th>
                   <th className="px-6 py-3.5">Institute / Autonomous Body</th>
                   <th className="px-6 py-3.5">Role</th>
+                  <th className="px-6 py-3.5">Assigned Specialization / Pathway</th>
                   <th className="px-6 py-3.5">Registered Date</th>
                   <th className="px-6 py-3.5 text-right">Status</th>
                 </tr>
@@ -314,13 +359,13 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-zinc-100 text-zinc-800">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
                       Loading user directory...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
                       No personnel records found.
                     </td>
                   </tr>
@@ -335,7 +380,7 @@ export default function AdminUsersPage() {
                     return matchesRole && matchesSearch;
                   }).length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">
                       No personnel matching filters.
                     </td>
                   </tr>
@@ -394,6 +439,28 @@ export default function AdminUsersPage() {
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.role === "TRAINER" ? (
+                            <select
+                              value={u.assignedBlockId || ""}
+                              disabled={updatingId === u.id}
+                              onChange={(e) => handleSpecializationChange(u.id, e.target.value)}
+                              className="text-xs px-2.5 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-900 font-medium focus:outline-none focus:border-zinc-900 cursor-pointer disabled:opacity-50 max-w-[220px] truncate"
+                              title="Assign trainer to an authorized subject pathway"
+                            >
+                              <option value="">-- Assign Specialization --</option>
+                              {blocks.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                  {b.title}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-[11px] text-zinc-400 font-mono italic">
+                              N/A ({u.role})
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-zinc-500 font-mono text-[11px]">
                           {new Date(u.createdAt).toLocaleDateString()}

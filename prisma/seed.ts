@@ -30,56 +30,7 @@ async function main() {
     },
   });
 
-  // 2. Create Trainers
-  const trainer1 = await prisma.user.create({
-    data: {
-      name: "Dr. Ananya Roy (Chief Oceanographer)",
-      email: "trainer.incois@moes.gov.in",
-      passwordHash: defaultPassword,
-      role: "TRAINER",
-      department: "INCOIS Hyderabad",
-    },
-  });
-
-  const trainer2 = await prisma.user.create({
-    data: {
-      name: "Dr. Vikram Seth (Radar Meteorologist)",
-      email: "trainer.imd@moes.gov.in",
-      passwordHash: defaultPassword,
-      role: "TRAINER",
-      department: "IMD Pune",
-    },
-  });
-
-  // 3. Create 10 Trainees across diverse MoES institutes
-  const traineesData = [
-    { name: "Rahul Verma", email: "rahul.v@imd.gov.in", dept: "IMD Delhi" },
-    { name: "Priya Sharma", email: "priya.s@incois.gov.in", dept: "INCOIS Hyderabad" },
-    { name: "Amitabh Sen", email: "amitabh.s@iitm.res.in", dept: "IITM Pune" },
-    { name: "Sneha Nair", email: "sneha.n@niot.res.in", dept: "NIOT Chennai" },
-    { name: "Karthik Rajan", email: "karthik.r@ncmrwf.gov.in", dept: "NCMRWF Noida" },
-    { name: "Divya Patel", email: "divya.p@imd.gov.in", dept: "IMD Mumbai" },
-    { name: "Manoj Deshmukh", email: "manoj.d@iitm.res.in", dept: "IITM Pune" },
-    { name: "Sunita Reddy", email: "sunita.r@incois.gov.in", dept: "INCOIS Hyderabad" },
-    { name: "Arun Joshi", email: "arun.j@ncpor.res.in", dept: "NCPOR Goa" },
-    { name: "Meera Menon", email: "meera.m@niot.res.in", dept: "NIOT Chennai" },
-  ];
-
-  const trainees = [];
-  for (const t of traineesData) {
-    const user = await prisma.user.create({
-      data: {
-        name: t.name,
-        email: t.email,
-        passwordHash: defaultPassword,
-        role: "TRAINEE",
-        department: t.dept,
-      },
-    });
-    trainees.push(user);
-  }
-
-  // 4. Create Competency Blocks
+  // 2. Create Competency Blocks
   const block1 = await prisma.competencyBlock.create({
     data: {
       title: "Ocean Observation & Deep-Sea Instrumentation",
@@ -107,7 +58,75 @@ async function main() {
     },
   });
 
-  // 5. Create Courses
+  // 3. Create Trainers assigned to specific competency blocks
+  const trainer1 = await prisma.user.create({
+    data: {
+      name: "Dr. Ananya Roy (Chief Oceanographer)",
+      email: "trainer.incois@moes.gov.in",
+      passwordHash: defaultPassword,
+      role: "TRAINER",
+      department: "INCOIS Hyderabad",
+      trainerStatus: "APPROVED",
+      assignedBlockId: block1.id,
+      specialization: block1.title,
+    },
+  });
+
+  const trainer2 = await prisma.user.create({
+    data: {
+      name: "Dr. Vikram Seth (Radar Meteorologist)",
+      email: "trainer.imd@moes.gov.in",
+      passwordHash: defaultPassword,
+      role: "TRAINER",
+      department: "IMD Pune",
+      trainerStatus: "APPROVED",
+      assignedBlockId: block2.id,
+      specialization: block2.title,
+    },
+  });
+
+  const trainer3 = await prisma.user.create({
+    data: {
+      name: "Dr. Rajesh Srivastav (Seismology Lead)",
+      email: "trainer.seismo@moes.gov.in",
+      passwordHash: defaultPassword,
+      role: "TRAINER",
+      department: "NCS New Delhi",
+      trainerStatus: "APPROVED",
+      assignedBlockId: block3.id,
+      specialization: block3.title,
+    },
+  });
+
+  // 4. Create 10 Trainees across diverse MoES institutes
+  const traineesData = [
+    { name: "Rahul Verma", email: "rahul.v@imd.gov.in", dept: "IMD Delhi" },
+    { name: "Priya Sharma", email: "priya.s@incois.gov.in", dept: "INCOIS Hyderabad" },
+    { name: "Amitabh Sen", email: "amitabh.s@iitm.res.in", dept: "IITM Pune" },
+    { name: "Sneha Nair", email: "sneha.n@niot.res.in", dept: "NIOT Chennai" },
+    { name: "Karthik Rajan", email: "karthik.r@ncmrwf.gov.in", dept: "NCMRWF Noida" },
+    { name: "Divya Patel", email: "divya.p@imd.gov.in", dept: "IMD Mumbai" },
+    { name: "Manoj Deshmukh", email: "manoj.d@iitm.res.in", dept: "IITM Pune" },
+    { name: "Sunita Reddy", email: "sunita.r@incois.gov.in", dept: "INCOIS Hyderabad" },
+    { name: "Arun Joshi", email: "arun.j@ncpor.res.in", dept: "NCPOR Goa" },
+    { name: "Meera Menon", email: "meera.m@niot.res.in", dept: "NIOT Chennai" },
+  ];
+
+  const trainees = [];
+  for (const t of traineesData) {
+    const user = await prisma.user.create({
+      data: {
+        name: t.name,
+        email: t.email,
+        passwordHash: defaultPassword,
+        role: "TRAINEE",
+        department: t.dept,
+      },
+    });
+    trainees.push(user);
+  }
+
+  // 5. Create Courses (strictly mapped to their authorized subject pathways)
   const course1 = await prisma.course.create({
     data: {
       title: "Deep-Sea Mooring & CTD Sensor Calibration",
@@ -134,7 +153,7 @@ async function main() {
       description:
         "Operate TUNAMI-N2 simulation tools, validate bathymetry data, and execute standard operating procedures for coastal evacuation alerts.",
       competencyBlockId: block3.id,
-      trainerId: trainer1.id,
+      trainerId: trainer3.id,
     },
   });
 

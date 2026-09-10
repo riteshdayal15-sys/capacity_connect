@@ -17,6 +17,9 @@ model User {
   department    String
   trainerStatus String              @default("NONE") // NONE, PENDING, APPROVED, REJECTED
   trainerRequestNote String?
+  specialization     String?             // e.g. "Ocean Observation & Deep-Sea Instrumentation"
+  assignedBlockId    String?
+  assignedBlock      CompetencyBlock?    @relation("TrainerAssignedBlock", fields: [assignedBlockId], references: [id], onDelete: SetNull)
   createdAt     DateTime            @default(now())
   courses       Course[]            @relation("TrainerCourses")
   enrollments   Enrollment[]
@@ -25,12 +28,13 @@ model User {
 }
 
 model CompetencyBlock {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  category    String
-  courses     Course[]
-  createdAt   DateTime @default(now())
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  category         String
+  courses          Course[]
+  assignedTrainers User[]   @relation("TrainerAssignedBlock")
+  createdAt        DateTime @default(now())
 }
 
 model Course {

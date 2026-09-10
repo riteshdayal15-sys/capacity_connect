@@ -73,7 +73,8 @@ export default function TrainerCourseDetailPage() {
       setLoading(true);
       const res = await fetch(`/api/courses/${courseId}`);
       if (!res.ok) {
-        throw new Error("Course not found or error loading data");
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Course not found or access denied.");
       }
       const data = await res.json();
       setCourse(data);
@@ -294,19 +295,30 @@ export default function TrainerCourseDetailPage() {
   }
 
   if (error || !course) {
+    const isAccessDenied = error?.toLowerCase().includes("forbidden") || error?.toLowerCase().includes("access");
     return (
       <div className="min-h-screen bg-[#FBFBFA] text-zinc-900">
         <Navbar role="TRAINER" />
-        <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-4">
-          <AlertCircle className="w-8 h-8 text-zinc-400 mx-auto" />
-          <h2 className="text-lg font-semibold text-zinc-950">Course Not Found</h2>
-          <p className="text-xs text-zinc-600">{error || "The requested curriculum record could not be loaded."}</p>
-          <Link
-            href="/trainer"
-            className="inline-flex items-center px-4 py-2 rounded-md bg-zinc-900 text-xs font-medium text-white"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Return to Trainer Workspace
-          </Link>
+        <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-4">
+          <div className={`w-12 h-12 rounded-xl mx-auto flex items-center justify-center ${
+            isAccessDenied ? "bg-red-50 text-red-600 border border-red-200" : "bg-zinc-100 text-zinc-500"
+          }`}>
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h2 className="text-lg font-semibold text-zinc-950">
+            {isAccessDenied ? "Access Denied: Subject Isolation Policy" : "Course Not Found"}
+          </h2>
+          <p className="text-xs text-zinc-600 max-w-md mx-auto leading-relaxed">
+            {error || "The requested curriculum record could not be loaded."}
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/trainer"
+              className="inline-flex items-center px-4 py-2 rounded-md bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" /> Return to My Specialized Courses
+            </Link>
+          </div>
         </div>
       </div>
     );
