@@ -81,11 +81,15 @@ export default function TrainerCourseDetailPage() {
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         const action = urlParams.get("action");
+        const typeParam = urlParams.get("type");
         if (action === "upload_syllabus") {
           setEditTitle(data.title || "");
           setEditDescription(data.description || "");
           setShowSyllabusModal(true);
-        } else if (action === "add_module") {
+        } else if (action === "add_module" || typeParam) {
+          if (typeParam && ["VIDEO", "PDF", "IMAGE", "TEXT", "LINK"].includes(typeParam.toUpperCase())) {
+            setModuleType(typeParam.toUpperCase() as any);
+          }
           setShowModuleModal(true);
         }
       }
@@ -444,27 +448,161 @@ export default function TrainerCourseDetailPage() {
 
         {/* Modules List */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-950 flex items-center">
-              <Layers className="w-4 h-4 mr-2 text-zinc-700" />
-              Syllabus &amp; Learning Modules
-            </h2>
-            <span className="text-xs text-zinc-600 font-mono">{course.modules?.length || 0} Modules</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-zinc-200/90 shadow-2xs">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-950 flex items-center">
+                <Layers className="w-4 h-4 mr-2 text-zinc-700" />
+                Syllabus &amp; Learning Modules ({course.modules?.length || 0})
+              </h2>
+              <p className="text-[11px] text-zinc-500 mt-0.5">
+                Add content by choosing an option below:
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setModuleType("PDF");
+                  setModuleTitle("");
+                  setContentUrl("");
+                  setContentText("");
+                  setShowModuleModal(true);
+                }}
+                className="px-2.5 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 text-xs font-medium inline-flex items-center transition-colors"
+                title="Upload PDF document"
+              >
+                <FileUp className="w-3.5 h-3.5 mr-1.5 text-red-600" />
+                Upload PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModuleType("TEXT");
+                  setModuleTitle("");
+                  setContentUrl("");
+                  setContentText("");
+                  setShowModuleModal(true);
+                }}
+                className="px-2.5 py-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 text-xs font-medium inline-flex items-center transition-colors"
+                title="Add manual procedural text or SOP"
+              >
+                <FileText className="w-3.5 h-3.5 mr-1.5 text-zinc-700" />
+                Manual Text
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModuleType("VIDEO");
+                  setModuleTitle("");
+                  setContentUrl("");
+                  setContentText("");
+                  setShowModuleModal(true);
+                }}
+                className="px-2.5 py-1.5 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-medium inline-flex items-center transition-colors"
+                title="Add YouTube video or MP4 link"
+              >
+                <Video className="w-3.5 h-3.5 mr-1.5 text-purple-600" />
+                YouTube Video
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModuleType("IMAGE");
+                  setModuleTitle("");
+                  setContentUrl("");
+                  setContentText("");
+                  setShowModuleModal(true);
+                }}
+                className="px-2.5 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-medium inline-flex items-center transition-colors"
+                title="Upload photos or diagrams"
+              >
+                <ImageIcon className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+                Photos
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setModuleType("LINK");
+                  setModuleTitle("");
+                  setContentUrl("");
+                  setContentText("");
+                  setShowModuleModal(true);
+                }}
+                className="px-2.5 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-medium inline-flex items-center transition-colors"
+                title="Add external link or portal"
+              >
+                <Link2 className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                Other Link
+              </button>
+            </div>
           </div>
 
           {course.modules?.length === 0 ? (
-            <div className="p-12 text-center rounded-lg bg-white border border-zinc-200 space-y-3">
-              <BookOpen className="w-8 h-8 text-zinc-400 mx-auto" />
-              <h3 className="text-sm font-semibold text-zinc-950">No modules added yet</h3>
-              <p className="text-xs text-zinc-600 max-w-sm mx-auto">
-                Begin structuring your curriculum by adding lecture units, procedural video guides, or technical reading material.
-              </p>
-              <button
-                onClick={() => setShowModuleModal(true)}
-                className="px-4 py-2 rounded-md bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-white"
-              >
-                + Add First Module
-              </button>
+            <div className="p-10 text-center rounded-xl bg-white border border-zinc-200/90 shadow-2xs space-y-4">
+              <BookOpen className="w-9 h-9 text-zinc-400 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-zinc-950">No modules added yet</h3>
+                <p className="text-xs text-zinc-600 max-w-md mx-auto">
+                  Add content to your course by selecting an upload format below:
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleType("PDF");
+                    setShowModuleModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 text-xs font-medium inline-flex items-center transition-colors"
+                >
+                  <FileUp className="w-3.5 h-3.5 mr-1.5 text-red-600" /> Upload PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleType("TEXT");
+                    setShowModuleModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 text-xs font-medium inline-flex items-center transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5 mr-1.5 text-zinc-700" /> Manual Text
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleType("VIDEO");
+                    setShowModuleModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-medium inline-flex items-center transition-colors"
+                >
+                  <Video className="w-3.5 h-3.5 mr-1.5 text-purple-600" /> YouTube Video
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleType("IMAGE");
+                    setShowModuleModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-medium inline-flex items-center transition-colors"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 mr-1.5 text-amber-600" /> Photos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleType("LINK");
+                    setShowModuleModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-medium inline-flex items-center transition-colors"
+                >
+                  <Link2 className="w-3.5 h-3.5 mr-1.5 text-blue-600" /> Other Link
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -602,19 +740,6 @@ export default function TrainerCourseDetailPage() {
                   <div className="grid grid-cols-5 gap-1.5 p-1 bg-zinc-100 rounded-lg border border-zinc-200 text-xs">
                     <button
                       type="button"
-                      onClick={() => setModuleType("VIDEO")}
-                      className={`p-2 rounded-md font-medium flex flex-col items-center justify-center space-y-1 transition-all ${
-                        moduleType === "VIDEO"
-                          ? "bg-white text-purple-900 shadow-xs font-semibold"
-                          : "text-zinc-600 hover:text-zinc-900"
-                      }`}
-                    >
-                      <Video className="w-3.5 h-3.5 text-purple-600" />
-                      <span className="text-[11px]">Video</span>
-                    </button>
-
-                    <button
-                      type="button"
                       onClick={() => setModuleType("PDF")}
                       className={`p-2 rounded-md font-medium flex flex-col items-center justify-center space-y-1 transition-all ${
                         moduleType === "PDF"
@@ -622,21 +747,8 @@ export default function TrainerCourseDetailPage() {
                           : "text-zinc-600 hover:text-zinc-900"
                       }`}
                     >
-                      <FileUp className="w-3.5 h-3.5 text-red-600" />
-                      <span className="text-[11px]">PDF</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setModuleType("IMAGE")}
-                      className={`p-2 rounded-md font-medium flex flex-col items-center justify-center space-y-1 transition-all ${
-                        moduleType === "IMAGE"
-                          ? "bg-white text-amber-900 shadow-xs font-semibold"
-                          : "text-zinc-600 hover:text-zinc-900"
-                      }`}
-                    >
-                      <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="text-[11px]">Diagram</span>
+                      <FileUp className="w-4 h-4 text-red-600" />
+                      <span className="text-[11px]">Upload PDF</span>
                     </button>
 
                     <button
@@ -648,8 +760,34 @@ export default function TrainerCourseDetailPage() {
                           : "text-zinc-600 hover:text-zinc-900"
                       }`}
                     >
-                      <FileText className="w-3.5 h-3.5 text-zinc-600" />
-                      <span className="text-[11px]">Text</span>
+                      <FileText className="w-4 h-4 text-zinc-700" />
+                      <span className="text-[11px]">Manual Text</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setModuleType("VIDEO")}
+                      className={`p-2 rounded-md font-medium flex flex-col items-center justify-center space-y-1 transition-all ${
+                        moduleType === "VIDEO"
+                          ? "bg-white text-purple-900 shadow-xs font-semibold"
+                          : "text-zinc-600 hover:text-zinc-900"
+                      }`}
+                    >
+                      <Video className="w-4 h-4 text-purple-600" />
+                      <span className="text-[11px]">YouTube Video</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setModuleType("IMAGE")}
+                      className={`p-2 rounded-md font-medium flex flex-col items-center justify-center space-y-1 transition-all ${
+                        moduleType === "IMAGE"
+                          ? "bg-white text-amber-900 shadow-xs font-semibold"
+                          : "text-zinc-600 hover:text-zinc-900"
+                      }`}
+                    >
+                      <ImageIcon className="w-4 h-4 text-amber-600" />
+                      <span className="text-[11px]">Photos</span>
                     </button>
 
                     <button
@@ -661,21 +799,24 @@ export default function TrainerCourseDetailPage() {
                           : "text-zinc-600 hover:text-zinc-900"
                       }`}
                     >
-                      <Link2 className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="text-[11px]">Resource</span>
+                      <Link2 className="w-4 h-4 text-blue-600" />
+                      <span className="text-[11px]">Other Link</span>
                     </button>
                   </div>
                 </div>
 
-                {/* --- VIDEO INPUT --- */}
+                {/* --- YOUTUBE / VIDEO INPUT --- */}
                 {moduleType === "VIDEO" && (
                   <div className="space-y-3 bg-[#FBFBFA] p-3.5 rounded-lg border border-zinc-200/80">
                     <div className="flex items-center justify-between">
-                      <label className="block text-xs font-medium text-zinc-800">
-                        Upload Video File or Paste Video URL
-                      </label>
-                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center">
-                        <UploadCloud className="w-3 h-3 mr-1 text-zinc-600" />
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-800">
+                          YouTube Video URL or Uploaded Video
+                        </label>
+                        <p className="text-[11px] text-zinc-500">Paste any YouTube URL or upload an MP4/WebM file</p>
+                      </div>
+                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center shadow-2xs">
+                        <UploadCloud className="w-3 h-3 mr-1 text-purple-600" />
                         {uploadingFile ? "Uploading..." : "Upload MP4/WebM"}
                         <input
                           type="file"
@@ -691,7 +832,7 @@ export default function TrainerCourseDetailPage() {
                       type="text"
                       value={contentUrl}
                       onChange={(e) => setContentUrl(e.target.value)}
-                      placeholder="e.g. /uploads/... or https://youtu.be/... or direct MP4 link"
+                      placeholder="e.g. https://www.youtube.com/watch?v=... or https://youtu.be/... or /uploads/video.mp4"
                       className="w-full px-3 py-2 rounded-md bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 text-xs focus:outline-none focus:border-zinc-900"
                     />
 
@@ -701,7 +842,7 @@ export default function TrainerCourseDetailPage() {
                         return (
                           <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 flex items-start">
                             <AlertCircle className="w-3.5 h-3.5 mr-1.5 mt-px shrink-0" />
-                            URL format not recognized. Use an uploaded video, youtube.com, or .mp4 link.
+                            URL format not recognized. Use a YouTube link (youtube.com or youtu.be), or uploaded video file (.mp4).
                           </p>
                         );
                       }
@@ -722,12 +863,13 @@ export default function TrainerCourseDetailPage() {
                           <div className="aspect-video w-full rounded-md overflow-hidden bg-black border border-zinc-200 max-h-48">
                             <iframe
                               src={media.src}
-                              title="Video preview"
+                              title="YouTube Video Preview"
                               className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                               allowFullScreen
                             />
                           </div>
-                          <p className="text-[11px] text-emerald-700">Video preview ready.</p>
+                          <p className="text-[11px] text-emerald-700">YouTube video preview ready.</p>
                         </div>
                       );
                     })()}
@@ -738,10 +880,13 @@ export default function TrainerCourseDetailPage() {
                 {moduleType === "PDF" && (
                   <div className="space-y-3 bg-[#FBFBFA] p-3.5 rounded-lg border border-zinc-200/80">
                     <div className="flex items-center justify-between">
-                      <label className="block text-xs font-medium text-zinc-800">
-                        PDF Document / Scientific Manual
-                      </label>
-                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-800">
+                          Upload PDF Document or Technical SOP
+                        </label>
+                        <p className="text-[11px] text-zinc-500">Upload PDF directly or provide a hosted link</p>
+                      </div>
+                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center shadow-2xs">
                         <UploadCloud className="w-3 h-3 mr-1 text-red-600" />
                         {uploadingFile ? "Uploading PDF..." : "Upload PDF File"}
                         <input
@@ -774,23 +919,26 @@ export default function TrainerCourseDetailPage() {
                           rel="noreferrer"
                           className="text-zinc-700 hover:text-zinc-900 underline text-[11px] inline-flex items-center"
                         >
-                          <ExternalLink className="w-3 h-3 mr-1" /> Test Link
+                          <ExternalLink className="w-3 h-3 mr-1" /> Open / Test PDF
                         </a>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* --- IMAGE / DIAGRAM INPUT --- */}
+                {/* --- PHOTOS / DIAGRAM INPUT --- */}
                 {moduleType === "IMAGE" && (
                   <div className="space-y-3 bg-[#FBFBFA] p-3.5 rounded-lg border border-zinc-200/80">
                     <div className="flex items-center justify-between">
-                      <label className="block text-xs font-medium text-zinc-800">
-                        Upload Diagram, Sensor Blueprint, or Radar Chart
-                      </label>
-                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-800">
+                          Upload Photos, Diagrams, or Schematics
+                        </label>
+                        <p className="text-[11px] text-zinc-500">Equipment photos, radar charts, schematics (PNG, JPG, SVG, WebP)</p>
+                      </div>
+                      <label className="cursor-pointer text-[11px] font-medium text-zinc-900 bg-white border border-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-50 transition-colors inline-flex items-center shadow-2xs">
                         <UploadCloud className="w-3 h-3 mr-1 text-amber-600" />
-                        {uploadingFile ? "Uploading..." : "Upload Photo / Chart"}
+                        {uploadingFile ? "Uploading..." : "Upload Photo / Image"}
                         <input
                           type="file"
                           accept="image/*"
@@ -805,7 +953,7 @@ export default function TrainerCourseDetailPage() {
                       type="text"
                       value={contentUrl}
                       onChange={(e) => setContentUrl(e.target.value)}
-                      placeholder="e.g. /uploads/radar_doppler_scan.png or image URL"
+                      placeholder="e.g. /uploads/radar_scan.png or external photo link"
                       className="w-full px-3 py-2 rounded-md bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 text-xs focus:outline-none focus:border-zinc-900"
                     />
 
@@ -815,50 +963,68 @@ export default function TrainerCourseDetailPage() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={contentUrl}
-                            alt="Module Diagram Preview"
+                            alt="Module Photo Preview"
                             className="max-h-48 object-contain"
                           />
                         </div>
-                        <p className="text-[11px] text-emerald-700">Image preview verified.</p>
+                        <p className="text-[11px] text-emerald-700">Photo preview verified.</p>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* --- EXTERNAL RESOURCE LINK INPUT --- */}
+                {/* --- OTHER LINK INPUT --- */}
                 {moduleType === "LINK" && (
                   <div className="space-y-3 bg-[#FBFBFA] p-3.5 rounded-lg border border-zinc-200/80">
-                    <label className="block text-xs font-medium text-zinc-800">
-                      External Scientific Portal or Live Observatory Link
-                    </label>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-800">
+                        Other External Link / Scientific Web Portal
+                      </label>
+                      <p className="text-[11px] text-zinc-500">Reference link, official government portal, live observatory, or web tool</p>
+                    </div>
                     <input
                       type="url"
                       value={contentUrl}
                       onChange={(e) => setContentUrl(e.target.value)}
-                      placeholder="https://incois.gov.in/portal/ or https://mausam.imd.gov.in/"
+                      placeholder="https://incois.gov.in/portal/ or https://mausam.imd.gov.in/ or any reference link"
                       className="w-full px-3 py-2 rounded-md bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 text-xs focus:outline-none focus:border-zinc-900"
                     />
+                    {contentUrl.trim() && (
+                      <a
+                        href={contentUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-zinc-700 hover:text-zinc-900 underline text-[11px] inline-flex items-center"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" /> Test Link in New Tab
+                      </a>
+                    )}
                   </div>
                 )}
 
-                {/* --- INSTRUCTIONAL TEXT / FIELD NOTES (Common for all, or primary for TEXT) --- */}
+                {/* --- MANUAL TEXT / SOP (Common or Primary for TEXT) --- */}
                 <div>
                   <label className="block text-xs font-medium text-zinc-700 mb-1">
                     {moduleType === "TEXT"
-                      ? "Instructional Body & Standard Operating Procedure"
-                      : "Instructor Notes & Field Guidelines (Optional)"}
+                      ? "Manual Text, Checklist & Standard Operating Procedure (SOP)"
+                      : "Instructor Notes & Trainee Briefing (Optional)"}
                   </label>
                   <textarea
-                    rows={moduleType === "TEXT" ? 6 : 3}
+                    rows={moduleType === "TEXT" ? 7 : 3}
                     value={contentText}
                     onChange={(e) => setContentText(e.target.value)}
                     placeholder={
                       moduleType === "TEXT"
-                        ? "Write detailed procedures, checklists, scientific formulas, or operational guidelines..."
+                        ? "Write or paste full manual text, procedures, checklists, scientific formulas, or step-by-step instructions..."
                         : "Add context, briefing notes, or instructions for trainees viewing this material..."
                     }
                     className="w-full px-3 py-2 rounded-md bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 text-xs focus:outline-none focus:border-zinc-900 font-normal leading-relaxed"
                   />
+                  {moduleType === "TEXT" && (
+                    <p className="text-[11px] text-zinc-500 mt-1">
+                      Trainees will read this manual text directly in their course viewer.
+                    </p>
+                  )}
                 </div>
 
                 {/* Key Takeaways / Summary bullet */}

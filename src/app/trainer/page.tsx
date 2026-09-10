@@ -14,6 +14,10 @@ import {
   Sparkles,
   UploadCloud,
   FileUp,
+  FileText,
+  Video,
+  Image as ImageIcon,
+  Link2,
 } from "lucide-react";
 
 export default async function TrainerDashboardPage() {
@@ -186,13 +190,67 @@ export default async function TrainerDashboardPage() {
                   </div>
 
                   <h3 className="text-sm font-semibold text-zinc-950 mb-1.5 leading-snug">{course.title}</h3>
-                  <p className="text-xs text-zinc-600 leading-relaxed line-clamp-3 font-normal">
+                  <p className="text-xs text-zinc-600 leading-relaxed line-clamp-2 font-normal">
                     {course.description || "Comprehensive procedural and operational SOP syllabus."}
                   </p>
+
+                  {/* Direct Format Quick-Add Buttons */}
+                  <div className="mt-3 pt-3 border-t border-zinc-100 space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-medium">
+                      <span>Add Course Content</span>
+                      <span>5 Formats</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 text-center">
+                      <Link
+                        href={`/trainer/courses/${course.id}?action=add_module&type=PDF`}
+                        className="p-1.5 rounded-md bg-zinc-50 hover:bg-red-50 hover:border-red-200 border border-zinc-200 transition-colors flex flex-col items-center justify-center group"
+                        title="Upload PDF Document"
+                      >
+                        <FileUp className="w-3.5 h-3.5 text-red-600 group-hover:scale-110 transition-transform mb-0.5" />
+                        <span className="text-[10px] font-medium text-zinc-700 group-hover:text-red-900 leading-tight">PDF</span>
+                      </Link>
+
+                      <Link
+                        href={`/trainer/courses/${course.id}?action=add_module&type=TEXT`}
+                        className="p-1.5 rounded-md bg-zinc-50 hover:bg-zinc-100 hover:border-zinc-300 border border-zinc-200 transition-colors flex flex-col items-center justify-center group"
+                        title="Add Manual Text / SOP"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-zinc-700 group-hover:scale-110 transition-transform mb-0.5" />
+                        <span className="text-[10px] font-medium text-zinc-700 group-hover:text-zinc-950 leading-tight">Text</span>
+                      </Link>
+
+                      <Link
+                        href={`/trainer/courses/${course.id}?action=add_module&type=VIDEO`}
+                        className="p-1.5 rounded-md bg-zinc-50 hover:bg-purple-50 hover:border-purple-200 border border-zinc-200 transition-colors flex flex-col items-center justify-center group"
+                        title="Add YouTube Video"
+                      >
+                        <Video className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform mb-0.5" />
+                        <span className="text-[10px] font-medium text-zinc-700 group-hover:text-purple-900 leading-tight">YouTube</span>
+                      </Link>
+
+                      <Link
+                        href={`/trainer/courses/${course.id}?action=add_module&type=IMAGE`}
+                        className="p-1.5 rounded-md bg-zinc-50 hover:bg-amber-50 hover:border-amber-200 border border-zinc-200 transition-colors flex flex-col items-center justify-center group"
+                        title="Upload Photos / Diagrams"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5 text-amber-600 group-hover:scale-110 transition-transform mb-0.5" />
+                        <span className="text-[10px] font-medium text-zinc-700 group-hover:text-amber-900 leading-tight">Photos</span>
+                      </Link>
+
+                      <Link
+                        href={`/trainer/courses/${course.id}?action=add_module&type=LINK`}
+                        className="p-1.5 rounded-md bg-zinc-50 hover:bg-blue-50 hover:border-blue-200 border border-zinc-200 transition-colors flex flex-col items-center justify-center group"
+                        title="Add Other Link / Web Portal"
+                      >
+                        <Link2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform mb-0.5" />
+                        <span className="text-[10px] font-medium text-zinc-700 group-hover:text-blue-900 leading-tight">Link</span>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Prominent Action Bar */}
-                <div className="pt-4 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                {/* Primary Action Bar */}
+                <div className="pt-3 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="text-zinc-600 font-mono text-[11px]">
                     {course.modules.length} {course.modules.length === 1 ? "Module" : "Modules"}
                   </span>
