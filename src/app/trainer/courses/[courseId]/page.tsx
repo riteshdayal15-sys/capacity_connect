@@ -19,9 +19,11 @@ import {
   UploadCloud,
   FileUp,
   Download,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { toEmbedUrl } from "@/lib/video";
+import { DeliverContentModal } from "@/components/DeliverContentModal";
 
 interface QuestionDraft {
   question: string;
@@ -67,6 +69,7 @@ export default function TrainerCourseDetailPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [savingSyllabus, setSavingSyllabus] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
 
   const fetchCourse = async () => {
     try {
@@ -400,16 +403,24 @@ export default function TrainerCourseDetailPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setEditTitle(course?.title || "");
-                setEditDescription(course?.description || "");
-                setShowSyllabusModal(true);
-              }}
-              className="px-3.5 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-xs font-medium text-white transition-colors inline-flex items-center shrink-0 self-start sm:self-auto shadow-xs"
-            >
-              <FileUp className="w-3.5 h-3.5 mr-1.5" /> Edit Syllabus / Upload Content
-            </button>
+            <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto">
+              <button
+                onClick={() => setShowEnrollModal(true)}
+                className="px-3.5 py-1.5 rounded-md bg-zinc-950 hover:bg-zinc-800 text-xs font-medium text-white transition-colors inline-flex items-center shadow-xs"
+              >
+                <UserPlus className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> Deliver Content / Enroll Trainee
+              </button>
+              <button
+                onClick={() => {
+                  setEditTitle(course?.title || "");
+                  setEditDescription(course?.description || "");
+                  setShowSyllabusModal(true);
+                }}
+                className="px-3.5 py-1.5 rounded-md bg-zinc-100 hover:bg-zinc-200 text-xs font-medium text-zinc-800 border border-zinc-200 transition-colors inline-flex items-center shadow-xs"
+              >
+                <FileUp className="w-3.5 h-3.5 mr-1.5 text-zinc-600" /> Edit Syllabus / Upload Content
+              </button>
+            </div>
           </div>
 
           <div className="bg-[#FBFBF9] rounded-lg border border-zinc-200/80 p-4">
@@ -1312,6 +1323,17 @@ export default function TrainerCourseDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Deliver Content / Manual Enrollment Modal */}
+        <DeliverContentModal
+          isOpen={showEnrollModal}
+          onClose={() => setShowEnrollModal(false)}
+          onSuccess={() => {
+            fetchCourse();
+          }}
+          courses={course ? [course] : []}
+          preselectedCourseId={courseId}
+        />
       </main>
     </div>
   );

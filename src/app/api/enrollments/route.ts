@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { requireApiAuth, ownsRecordOrAdmin, sanitizeCourseForRole } from "@/lib/api-auth";
+import { requireApiAuth, ownsRecordOrAdmin, sanitizeCourseForRole, canTrainerManageCourse } from "@/lib/api-auth";
 
 export async function GET(req: Request) {
   const auth = await requireApiAuth();
@@ -59,8 +59,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "courseId and traineeId are required" }, { status: 400 });
     }
 
-    // Trainees may only enroll themselves.
-    if (!ownsRecordOrAdmin(auth.session, traineeId)) {
+    // Trainee can enroll themselves; Admin can enroll anyone;
+    // Trainer can enroll trainees into courses they manage within their assigned subject.
+    let isAuthorized = ownsRecordOrAdmin(auth.session, traineeId);
+
+    const targetCourse = await prisma.course.findUnique({
+      where: { id: courseId },
+      include: { competencyBlock: true },
+    });
+
+    if (!targetCourse) {
+      return NextResponse.json({ error: "Course not found." }, { status: 404 });
+    }
+
+    if (!isAuthorized && auth.session.role === "TRAINER") {
+      if (canTrainerManageCourse(auth.session, targetCourse)) {
+        isAuthorized = true;
+      } else {
+        return NextResponse.json(
+          { error: "Forbidden. You can only deliver and enroll trainees into courses you author within your assigned subject pathway." },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (!isAuthorized) {
       return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     }
 

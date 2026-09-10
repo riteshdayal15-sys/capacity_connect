@@ -42,13 +42,15 @@ export async function POST(req: Request) {
   if ("unauthorized" in auth) return auth.unauthorized;
 
   try {
-    const { note } = await req.json();
+    const { note, assignedBlockId, specialization } = await req.json();
 
     const updated = await prisma.user.update({
       where: { id: auth.session.id },
       data: {
         trainerStatus: "PENDING",
         trainerRequestNote: note ? String(note).trim().slice(0, 500) : "Trainee submitted trainer accreditation application.",
+        ...(assignedBlockId ? { assignedBlockId: String(assignedBlockId).trim() } : {}),
+        ...(specialization ? { specialization: String(specialization).trim() } : {}),
       },
       select: safeUserSelect,
     });
@@ -69,7 +71,7 @@ export async function PATCH(req: Request) {
   if ("unauthorized" in auth) return auth.unauthorized;
 
   try {
-    const { userId, action } = await req.json(); // action: "APPROVE" | "REJECT"
+    const { userId, action, assignedBlockId, specialization } = await req.json(); // action: "APPROVE" | "REJECT"
 
     if (!userId || !["APPROVE", "REJECT"].includes(action)) {
       return NextResponse.json({ error: "userId and valid action (APPROVE/REJECT) required" }, { status: 400 });
@@ -80,6 +82,8 @@ export async function PATCH(req: Request) {
       data: {
         role: action === "APPROVE" ? "TRAINER" : "TRAINEE",
         trainerStatus: action === "APPROVE" ? "APPROVED" : "REJECTED",
+        ...(action === "APPROVE" && assignedBlockId ? { assignedBlockId: String(assignedBlockId).trim() } : {}),
+        ...(action === "APPROVE" && specialization ? { specialization: String(specialization).trim() } : {}),
       },
       select: safeUserSelect,
     });
@@ -88,7 +92,7 @@ export async function PATCH(req: Request) {
       success: true,
       action,
       user: updated,
-      message: action === "APPROVE" ? "Officer accredited as TRAINER." : "Application declined.",
+      message: action === "APPROVE" ? "Officer accredited as TRAINER with assigned subject pathway." : "Application declined.",
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

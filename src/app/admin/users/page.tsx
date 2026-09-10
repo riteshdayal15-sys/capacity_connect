@@ -107,17 +107,25 @@ export default function AdminUsersPage() {
   const handleTrainerApproval = async (userId: string, action: "APPROVE" | "REJECT") => {
     setUpdatingId(userId);
     try {
+      const applicant = users.find((u) => u.id === userId);
       const res = await fetch("/api/trainer-requests", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, action }),
+        body: JSON.stringify({
+          userId,
+          action,
+          assignedBlockId: applicant?.assignedBlockId,
+          specialization: applicant?.specialization,
+        }),
       });
       if (res.ok) {
+        const data = await res.json();
         setUsers((prev) =>
           prev.map((u) =>
             u.id === userId
               ? {
                   ...u,
+                  ...(data.user || {}),
                   role: action === "APPROVE" ? "TRAINER" : u.role,
                   trainerStatus: action === "APPROVE" ? "APPROVED" : "REJECTED",
                 }
@@ -282,6 +290,13 @@ export default function AdminUsersPage() {
                       {applicant.trainerRequestNote && (
                         <div className="mt-2.5 p-2 rounded bg-zinc-50 border border-zinc-150 text-[11px] text-zinc-700 italic">
                           &ldquo;{applicant.trainerRequestNote}&rdquo;
+                        </div>
+                      )}
+
+                      {(applicant.specialization || applicant.assignedBlock?.title) && (
+                        <div className="mt-2 text-[11px] font-medium text-amber-900 bg-amber-100/60 border border-amber-200/80 px-2 py-1 rounded flex items-center justify-between">
+                          <span className="text-amber-700 font-mono text-[10px] uppercase">Requested Pathway:</span>
+                          <span className="font-semibold">{applicant.specialization || applicant.assignedBlock?.title}</span>
                         </div>
                       )}
                     </div>

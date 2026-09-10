@@ -24,10 +24,24 @@ export default function SignUpPage() {
   const [department, setDepartment] = useState("IMD New Delhi (Meteorology)");
   const [selectedRole, setSelectedRole] = useState<"TRAINEE" | "TRAINER">("TRAINEE");
   const [trainerRequestNote, setTrainerRequestNote] = useState("");
+  const [competencyBlocks, setCompetencyBlocks] = useState<any[]>([]);
+  const [selectedBlockId, setSelectedBlockId] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/competency-blocks")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCompetencyBlocks(data);
+          setSelectedBlockId(data[0].id);
+        }
+      })
+      .catch((err) => console.error("Failed to load competency blocks:", err));
+  }, []);
 
   const departments = [
     "IMD New Delhi (Meteorology)",
@@ -57,6 +71,8 @@ export default function SignUpPage() {
 
     try {
       const applyTrainer = selectedRole === "TRAINER";
+      const chosenBlock = competencyBlocks.find((b) => b.id === selectedBlockId);
+
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,6 +83,8 @@ export default function SignUpPage() {
           department,
           applyTrainer,
           trainerRequestNote: applyTrainer ? trainerRequestNote : null,
+          assignedBlockId: applyTrainer ? selectedBlockId : null,
+          specialization: applyTrainer && chosenBlock ? chosenBlock.title : null,
         }),
       });
 
@@ -264,21 +282,52 @@ export default function SignUpPage() {
 
             {/* Trainer Application Note (only shown when registering as Trainer) */}
             {selectedRole === "TRAINER" && (
-              <div className="rounded-md border border-amber-200 bg-amber-50/50 p-3 space-y-1.5">
-                <label className="block text-xs font-medium text-amber-950">
-                  Faculty Specialization &amp; Credentials
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  value={trainerRequestNote}
-                  onChange={(e) => setTrainerRequestNote(e.target.value)}
-                  placeholder="e.g. Scientist-D at INCOIS, 6 years in numerical weather forecasting & marine sensors."
-                  className="w-full px-2.5 py-1.5 rounded bg-white border border-amber-200 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-amber-700 text-xs"
-                />
-                <p className="text-[10px] text-amber-800/90">
-                  Your request will be submitted to the Directorate for review. You can log in immediately as an officer while review is pending.
-                </p>
+              <div className="rounded-md border border-amber-200 bg-amber-50/50 p-3 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-amber-950 mb-1">
+                    Subject / Competency Pathway Specialization <span className="text-amber-700">*</span>
+                  </label>
+                  <select
+                    value={selectedBlockId}
+                    onChange={(e) => setSelectedBlockId(e.target.value)}
+                    required
+                    className="w-full px-2.5 py-1.5 rounded bg-white border border-amber-200 text-zinc-900 text-xs focus:outline-none focus:border-amber-700"
+                  >
+                    {competencyBlocks.length > 0 ? (
+                      competencyBlocks.map((block) => (
+                        <option key={block.id} value={block.id}>
+                          {block.title} ({block.category})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="ocean-buoy-deepsea">Ocean Observation &amp; Deep-Sea Instrumentation</option>
+                        <option value="atmospheric-remote-sensing">Atmospheric Remote Sensing &amp; Doppler Weather Radar</option>
+                        <option value="seismological-network-ops">Seismological Network Operations &amp; Tsunami Warning</option>
+                      </>
+                    )}
+                  </select>
+                  <p className="text-[10px] text-amber-800/90 mt-1">
+                    You will be assigned to manage, author, and deliver curricula exclusively within this subject.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-amber-950">
+                    Faculty Credentials &amp; Experience
+                  </label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={trainerRequestNote}
+                    onChange={(e) => setTrainerRequestNote(e.target.value)}
+                    placeholder="e.g. Scientist-D at INCOIS, 6 years in numerical weather forecasting & marine sensors."
+                    className="w-full px-2.5 py-1.5 rounded bg-white border border-amber-200 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-amber-700 text-xs"
+                  />
+                  <p className="text-[10px] text-amber-800/90">
+                    Your application will be submitted to the Directorate for accreditation. Once approved, this subject will be automatically assigned to you.
+                  </p>
+                </div>
               </div>
             )}
 

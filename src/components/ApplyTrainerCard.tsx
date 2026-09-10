@@ -12,18 +12,43 @@ export function ApplyTrainerCard({ currentStatus, currentNote }: ApplyTrainerPro
   const [status, setStatus] = useState(currentStatus);
   const [showModal, setShowModal] = useState(false);
   const [note, setNote] = useState("");
+  const [competencyBlocks, setCompetencyBlocks] = useState<any[]>([]);
+  const [selectedBlockId, setSelectedBlockId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loadBlocks = async () => {
+    try {
+      const res = await fetch("/api/competency-blocks");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setCompetencyBlocks(data);
+        if (!selectedBlockId) setSelectedBlockId(data[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+    loadBlocks();
+  };
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
+      const chosenBlock = competencyBlocks.find((b) => b.id === selectedBlockId);
       const res = await fetch("/api/trainer-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note }),
+        body: JSON.stringify({
+          note,
+          assignedBlockId: selectedBlockId || undefined,
+          specialization: chosenBlock ? chosenBlock.title : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit application");
@@ -82,7 +107,7 @@ export function ApplyTrainerCard({ currentStatus, currentNote }: ApplyTrainerPro
 
         <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={handleOpenModal}
           className="px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors flex items-center space-x-1.5 self-start sm:self-auto shrink-0"
         >
           <span>Apply for Trainer Privileges</span>
@@ -111,7 +136,32 @@ export function ApplyTrainerCard({ currentStatus, currentNote }: ApplyTrainerPro
             <form onSubmit={handleApply} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-zinc-800 mb-1">
-                  Field Specialization &amp; Experience
+                  Subject / Competency Pathway Specialization <span className="text-amber-600">*</span>
+                </label>
+                <select
+                  value={selectedBlockId}
+                  onChange={(e) => setSelectedBlockId(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded bg-white border border-zinc-200 text-xs text-zinc-900 focus:outline-none focus:border-zinc-900"
+                >
+                  {competencyBlocks.length > 0 ? (
+                    competencyBlocks.map((block) => (
+                      <option key={block.id} value={block.id}>
+                        {block.title} ({block.category})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Loading pathways...</option>
+                  )}
+                </select>
+                <p className="text-[10px] text-zinc-500 mt-1">
+                  You will be accredited to manage courses and trainees specifically in this subject.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-800 mb-1">
+                  Field Credentials &amp; Experience
                 </label>
                 <textarea
                   required

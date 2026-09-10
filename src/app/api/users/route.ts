@@ -3,11 +3,26 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { requireApiAuth, safeUserSelect } from "@/lib/api-auth";
 
-// Only admins may list personnel. Called solely from /admin/users.
+// Admins list all personnel; Trainers may list trainees for manual enrollment into their curricula.
 export async function GET() {
-  const auth = await requireApiAuth(["ADMIN"]);
+  const auth = await requireApiAuth(["ADMIN", "TRAINER"]);
   if ("unauthorized" in auth) return auth.unauthorized;
   try {
+    if (auth.session.role === "TRAINER") {
+      const trainees = await prisma.user.findMany({
+        where: { role: "TRAINEE" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          department: true,
+          role: true,
+        },
+        orderBy: { name: "asc" },
+      });
+      return NextResponse.json(trainees);
+    }
+
     const users = await prisma.user.findMany({
       select: safeUserSelect,
       orderBy: { createdAt: "desc" },

@@ -15,7 +15,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { name, email, password, department, applyTrainer, trainerRequestNote } = await req.json();
+    const {
+      name,
+      email,
+      password,
+      department,
+      applyTrainer,
+      trainerRequestNote,
+      assignedBlockId,
+      specialization,
+    } = await req.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -58,6 +67,7 @@ export async function POST(req: Request) {
     // Create new user in the database.
     // SECURITY: public self-registration can only ever create TRAINEES initially.
     // If applyTrainer is true, trainerStatus is set to PENDING for Admin review.
+    // Also record their requested subject pathway (assignedBlockId and specialization).
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
@@ -67,6 +77,8 @@ export async function POST(req: Request) {
         role: "TRAINEE",
         trainerStatus: applyTrainer ? "PENDING" : "NONE",
         trainerRequestNote: applyTrainer && trainerRequestNote ? String(trainerRequestNote).trim().slice(0, 500) : null,
+        assignedBlockId: applyTrainer && assignedBlockId ? String(assignedBlockId).trim() : null,
+        specialization: applyTrainer && specialization ? String(specialization).trim() : null,
       },
       select: {
         id: true,
@@ -76,6 +88,8 @@ export async function POST(req: Request) {
         department: true,
         trainerStatus: true,
         trainerRequestNote: true,
+        assignedBlockId: true,
+        specialization: true,
         createdAt: true,
       },
     });
