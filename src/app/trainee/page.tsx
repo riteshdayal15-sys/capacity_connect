@@ -13,9 +13,13 @@ export default async function TraineeDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
 
-  const userRole = (session.user as any).role;
-  if (userRole === "TRAINER") {
-    redirect("/trainer");
+  const userRole = (session.user as any)?.role;
+  if (userRole === "ADMIN") {
+    redirect("/admin?access_denied=trainee");
+  } else if (userRole === "TRAINER") {
+    redirect("/trainer?access_denied=trainee");
+  } else if (userRole !== "TRAINEE") {
+    redirect("/login");
   }
 
   const userId = (session.user as any).id;

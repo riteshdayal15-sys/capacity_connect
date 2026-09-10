@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertCircle, ArrowRight } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    getSession().then((session) => {
+      const role = (session?.user as any)?.role;
+      if (role === "ADMIN") window.location.href = "/admin";
+      else if (role === "TRAINER") window.location.href = "/trainer";
+      else if (role === "TRAINEE") window.location.href = "/trainee";
+    });
+  }, []);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

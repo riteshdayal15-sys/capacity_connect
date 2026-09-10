@@ -1,7 +1,8 @@
 "use client";
 
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -13,10 +14,46 @@ import {
   Compass,
   BrainCircuit,
   GraduationCap,
+  ShieldAlert,
+  X,
 } from "lucide-react";
 
 interface NavbarProps {
   role: "ADMIN" | "TRAINER" | "TRAINEE";
+}
+
+function AccessDeniedContent({ role }: { role: string }) {
+  const searchParams = useSearchParams();
+  const [show, setShow] = useState(false);
+  const [deniedArea, setDeniedArea] = useState("");
+
+  useEffect(() => {
+    const denied = searchParams.get("access_denied");
+    if (denied) {
+      setDeniedArea(denied.toUpperCase());
+      setShow(true);
+    }
+  }, [searchParams]);
+
+  if (!show) return null;
+
+  return (
+    <div className="bg-red-50 border-b border-red-200 px-4 sm:px-8 py-2 text-xs text-red-900 flex items-center justify-between animate-fade-in">
+      <div className="flex items-center space-x-2.5">
+        <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
+        <span className="font-mono text-[11px]">
+          <strong>Access Denied &bull; Unauthorized:</strong> You do not have permission to access the {deniedArea || "requested"} workspace. Redirected to your authorized {role} console.
+        </span>
+      </div>
+      <button
+        onClick={() => setShow(false)}
+        className="text-red-700 hover:text-red-950 p-1 rounded hover:bg-red-100 transition-colors"
+        title="Dismiss notice"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 }
 
 export function Navbar({ role }: NavbarProps) {
@@ -54,6 +91,10 @@ export function Navbar({ role }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-zinc-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <Suspense fallback={null}>
+        <AccessDeniedContent role={role} />
+      </Suspense>
+
       {/* Top micro status bar */}
       <div className="border-b border-zinc-100 bg-[#FBFBF9] text-[10px] font-mono text-zinc-500 py-1 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

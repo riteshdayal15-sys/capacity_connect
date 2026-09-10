@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,21 +14,24 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleLogin = async (loginEmail?: string, loginPassword?: string) => {
-    const targetEmail = loginEmail || email;
-    const targetPassword = loginPassword || password;
+  useEffect(() => {
+    getSession().then((session) => {
+      const role = (session?.user as any)?.role;
+      if (role === "ADMIN") window.location.href = "/admin";
+      else if (role === "TRAINER") window.location.href = "/trainer";
+      else if (role === "TRAINEE") window.location.href = "/trainee";
+    });
+  }, []);
 
-    if (!targetEmail) {
+  const handleLogin = async () => {
+    if (!email.trim()) {
       setError("Please enter your email address");
       return;
     }
-    if (!targetPassword) {
+    if (!password) {
       setError("Please enter your password");
       return;
     }
-
-    if (loginEmail) setEmail(loginEmail);
-    if (loginPassword) setPassword(loginPassword);
 
     setLoading(true);
     setError("");
@@ -36,8 +39,8 @@ export default function LoginPage() {
     try {
       const res = await signIn("credentials", {
         redirect: false,
-        email: targetEmail,
-        password: targetPassword,
+        email: email.trim(),
+        password: password,
       });
 
       if (!res?.ok || res?.error) {
@@ -238,37 +241,6 @@ export default function LoginPage() {
             <span>{googleLoading ? "Connecting..." : "Continue with Google"}</span>
           </button>
 
-          {/* Quick Demo Accounts for Hackathon Evaluators */}
-          <div className="pt-3 border-t border-zinc-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
-                Quick Demo Access:
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 text-center">
-              <button
-                type="button"
-                onClick={() => handleLogin("admin@moes.gov.in", "password123")}
-                className="py-1 px-2 rounded border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-[10px] font-mono font-medium text-amber-900 transition-colors"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLogin("trainer.incois@moes.gov.in", "password123")}
-                className="py-1 px-2 rounded border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-[10px] font-mono font-medium text-emerald-900 transition-colors"
-              >
-                Trainer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLogin("rahul.v@imd.gov.in", "password123")}
-                className="py-1 px-2 rounded border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-[10px] font-mono font-medium text-blue-900 transition-colors"
-              >
-                Trainee
-              </button>
-            </div>
-          </div>
 
           <div className="text-center pt-2">
             <p className="text-xs text-zinc-600">

@@ -10,7 +10,15 @@ import { ScrollReveal } from "@/components/ScrollReveal";
 
 export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "ADMIN") {
+  if (!session) {
+    redirect("/login");
+  }
+  const userRole = (session.user as any)?.role;
+  if (userRole === "TRAINER") {
+    redirect("/trainer?access_denied=admin");
+  } else if (userRole === "TRAINEE") {
+    redirect("/trainee?access_denied=admin");
+  } else if (userRole !== "ADMIN") {
     redirect("/login");
   }
 

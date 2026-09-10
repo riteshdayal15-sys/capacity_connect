@@ -8,11 +8,18 @@ import { BookOpen, Users, Plus, BrainCircuit, Layers, ArrowUpRight, Sparkles } f
 
 export default async function TrainerDashboardPage() {
   const session = await getServerSession(authOptions);
-  if (!session || ((session.user as any).role !== "TRAINER" && (session.user as any).role !== "ADMIN")) {
+  if (!session) {
+    redirect("/login");
+  }
+  const userRole = (session.user as any)?.role;
+  if (userRole === "TRAINEE") {
+    redirect("/trainee?access_denied=trainer");
+  } else if (userRole === "ADMIN") {
+    redirect("/admin?access_denied=trainer");
+  } else if (userRole !== "TRAINER") {
     redirect("/login");
   }
 
-  const userRole = (session.user as any).role;
   const userId = (session.user as any).id;
 
   const courses = await prisma.course.findMany({
