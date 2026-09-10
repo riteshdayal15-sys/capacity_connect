@@ -157,7 +157,7 @@ async function main() {
     },
   });
 
-  // 6. Create Modules for Course 1
+  // 6. Create Comprehensive Modules for Course 1 (All 5 Formats)
   const mod1 = await prisma.module.create({
     data: {
       courseId: course1.id,
@@ -190,6 +190,103 @@ Reliable sensor calibrations and preventative maintenance are critical for opera
         "- Standard seawater (IAPSO) validation before cruise deployment.\n- Acoustic release battery load testing and transponder ping check.\n- Anti-fouling coating application on optical and conductivity cells.",
       order: 2,
     },
+  });
+
+  const mod3 = await prisma.module.create({
+    data: {
+      courseId: course1.id,
+      title: "Deep-Sea Moored Buoy Technical Specification Manual",
+      type: "PDF",
+      contentUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      contentText:
+        "Official technical manual detailing inductive wire tension limits, acoustic transponder frequencies, and sensor cage anchoring procedures.",
+      summary:
+        "- Comprehensive PDF specification guide for marine engineers.\n- Acoustic transponder pinging frequencies: 12 kHz / 11 kHz.\n- Inductive telemetry cable maximum safe load: 45 kN.",
+      order: 3,
+    },
+  });
+
+  const mod4 = await prisma.module.create({
+    data: {
+      courseId: course1.id,
+      title: "Subsurface Inductive Chain & Sensor Layout Schematic",
+      type: "IMAGE",
+      contentUrl: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80",
+      contentText:
+        "High-resolution engineering schematic of the ocean mooring inductive telemetry chain, showing sensor clamp positions at 10m, 50m, 100m, 200m, and 500m depth.",
+      summary:
+        "- Visual schematic diagram for offshore mooring assembly.\n- Clamp torques must be calibrated to 25 Nm.\n- Dual zinc sacrificial anodes positioned every 50 meters.",
+      order: 4,
+    },
+  });
+
+  const mod5 = await prisma.module.create({
+    data: {
+      courseId: course1.id,
+      title: "INCOIS Real-Time Indian Ocean Observation Portal",
+      type: "LINK",
+      contentUrl: "https://incois.gov.in/",
+      contentText:
+        "Access the live MoES INCOIS telemetry portal to observe real-time buoy streams, Argo float trajectory profiles, and sea-surface temperature anomalies.",
+      summary:
+        "- Live operational portal access for monitoring active cadre buoy deployments.",
+      order: 5,
+    },
+  });
+
+  // Modules for Course 2 (Atmospheric Remote Sensing)
+  await prisma.module.createMany({
+    data: [
+      {
+        courseId: course2.id,
+        title: "Doppler Weather Radar Principles & Dual-Polarization Sweeps",
+        type: "VIDEO",
+        contentUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        contentText:
+          "Video tutorial on dual-pol variables: Differential Reflectivity (ZDR), Correlation Coefficient (CC), and Specific Differential Phase (KDP).",
+        summary: "Covers dual-pol radar theory for severe storm and cyclone tracking.",
+        order: 1,
+      },
+      {
+        courseId: course2.id,
+        title: "IMD Doppler Radar Operational Manual & Calibration SOP",
+        type: "PDF",
+        contentUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        contentText:
+          "Standard operating procedure for performing solar calibrations, sun-tracking alignment, and transmitter klystron tuning.",
+        summary: "Official IMD technical reference document for radar engineers.",
+        order: 2,
+      },
+      {
+        courseId: course2.id,
+        title: "Radar Echo Reflectivity Cross-Section & Supercell Structure",
+        type: "IMAGE",
+        contentUrl: "https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1200&q=80",
+        contentText:
+          "Radar vertical cross-section diagram showing bounded weak echo region (BWER), hook echo signature, and mesocyclone rotation.",
+        summary: "Key visual diagram for cyclone and severe convective storm identification.",
+        order: 3,
+      },
+      {
+        courseId: course2.id,
+        title: "Severe Cyclone Velocity De-Aliasing Guidelines",
+        type: "TEXT",
+        contentText:
+          "Standard operating protocol for resolving Nyquist velocity ambiguities in high-wind tropical cyclone environments exceeding 50 m/s.",
+        summary: "Algorithmic and manual velocity unfolding guidelines for meteorologists.",
+        order: 4,
+      },
+      {
+        courseId: course2.id,
+        title: "IMD National Radar Composite & Cyclone Warning Center",
+        type: "LINK",
+        contentUrl: "https://mausam.imd.gov.in/",
+        contentText:
+          "Direct reference to the live IMD national radar network mosaic and coastal radar feeds.",
+        summary: "Operational government portal link for trainees.",
+        order: 5,
+      },
+    ],
   });
 
   // 7. Create Assessments & Questions
@@ -236,7 +333,7 @@ Reliable sensor calibrations and preventative maintenance are critical for opera
       traineeId: trainees[0].id,
       status: "COMPLETED",
       progressPercent: 100,
-      completedModuleIds: JSON.stringify([mod1.id, mod2.id]),
+      completedModuleIds: JSON.stringify([mod1.id, mod2.id, mod3.id, mod4.id, mod5.id]),
     },
   });
 
